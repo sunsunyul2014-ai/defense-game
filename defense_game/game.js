@@ -92,15 +92,18 @@ const POKEMON_DATA = {
     
     'litten': { name: '냐오불', spriteId: 725, cost: 50, range: 80, damage: 25, cooldown: 40, type: 'single', color: '#ef4444', desc: '불꽃 고양이! (근접 단일 공격)', evolveLvl: 8, evolveTo: 'torracat', attackStyle: 'fire' },
     'torracat': { name: '냐오히트', spriteId: 726, cost: 0, range: 120, damage: 55, cooldown: 30, type: 'aoe', aoeRange: 70, color: '#dc2626', desc: '목의 방울에서 불꽃을 내뿜습니다. (범위 공격 + 공속 증가 + 20% 화상)', burnChance: 0.2, evolveLvl: 15, evolveCost: 300, evolveTo: 'incineroar', attackStyle: 'fire' },
-    'incineroar': { name: '어흥염', spriteId: 727, cost: 0, range: 190, damage: 120, cooldown: 25, type: 'aoe', aoeRange: 90, color: '#b91c1c', desc: '강력한 힐 악역 레슬러! (범위 딜 + 거북왕 범위 내 적에게 영구 공깎 25% 위협 펄스)', hasIntimidate: true, auraRange: 190, attackStyle: 'fire' },
+    'incineroar': { name: '어흥염', spriteId: 727, cost: 0, range: 190, damage: 120, cooldown: 40, type: 'aoe', aoeRange: 90, color: '#b91c1c', desc: '강력한 힐 악역 레슬러! (범위 딜 + 거북왕 범위 내 적에게 영구 공깎 25% 위협 펄스)', hasIntimidate: true, auraRange: 190, attackStyle: 'fire' },
 
     'popplio': { name: '누리공', spriteId: 728, cost: 50, range: 130, damage: 15, cooldown: 45, type: 'aoe', aoeRange: 60, color: '#3b82f6', desc: '물풍선을 만들어 공격합니다. (넓은 범위 + 10% 적 공격력 하락)', atkDownFactor: 0.9, debuffDur: 120, evolveLvl: 8, evolveTo: 'brionne', attackStyle: 'water' },
     'brionne': { name: '키요공', spriteId: 729, cost: 0, range: 160, damage: 35, cooldown: 45, type: 'aoe', aoeRange: 80, color: '#2563eb', desc: '춤추며 물풍선을 더 멀리 넓게 던집니다. (사거리/범위 증가 + 10% 적 공깎)', atkDownFactor: 0.9, debuffDur: 150, evolveLvl: 15, evolveCost: 300, evolveTo: 'primarina', attackStyle: 'water' },
     'primarina': { name: '누리레느', spriteId: 730, cost: 0, range: 190, damage: 95, cooldown: 35, type: 'aoe', aoeRange: 100, color: '#1d4ed8', desc: '아름다운 노랫소리! (공속/딜 대폭 증가 + 15% 적 공깎)', atkDownFactor: 0.85, debuffDur: 180, attackStyle: 'water' },
 
-    'rowlet': { name: '나몰빼미', spriteId: 722, cost: 50, range: 150, damage: 5, cooldown: 50, type: 'spread', spreadCount: 5, color: '#22c55e', desc: '소리 없이 다가가 깃털을 날립니다! (5연발 관통 깃털 + 5% 밀치기)', knockbackChance: 0.05, evolveLvl: 8, evolveTo: 'dartrix', attackStyle: 'leaf' },
+    'rowlet': { name: '나몰빼미', spriteId: 722, cost: 50, range: 150, damage: 3, cooldown: 50, type: 'spread', spreadCount: 5, color: '#22c55e', desc: '소리 없이 다가가 깃털을 날립니다! (5연발 관통 깃털 + 5% 밀치기)', knockbackChance: 0.05, evolveLvl: 8, evolveTo: 'dartrix', attackStyle: 'leaf' },
     'dartrix': { name: '빼미스로우', spriteId: 723, cost: 0, range: 180, damage: 12, cooldown: 40, type: 'spread', spreadCount: 5, color: '#16a34a', desc: '앞머리를 신경 쓰는 멋쟁이. (공속/딜/사거리 증가 + 5% 밀치기)', knockbackChance: 0.05, evolveLvl: 15, evolveCost: 300, evolveTo: 'decidueye', attackStyle: 'leaf' },
-    'decidueye': { name: '모크나이퍼', spriteId: 724, cost: 0, range: 220, damage: 30, cooldown: 35, type: 'spread', spreadCount: 7, color: '#15803d', desc: '그림자 꿰매기! (7연발 관통 깃털 + 적 회복 봉인)', healBlock: true, debuffDur: 200, attackStyle: 'leaf' }
+    'decidueye': { name: '모크나이퍼', spriteId: 724, cost: 0, range: 220, damage: 30, cooldown: 35, type: 'spread', spreadCount: 7, color: '#15803d', desc: '그림자 꿰매기! (7연발 관통 깃털 + 적 회복 봉인)', healBlock: true, debuffDur: 200, attackStyle: 'leaf' },
+
+    'type_null': { name: '타입:널', spriteId: 772, cost: 0, range: 100, damage: 150, cooldown: 15, type: 'single', color: '#9ca3af', desc: '강력한 스펙 근접 단일 딜 (스턴 및 상태이상 면역)', immuneToDebuffs: true, evolveLvl: 15, evolveCost: 0, evolveTo: 'silvally', attackStyle: 'normal' },
+    'silvally': { name: '실버디', spriteId: 773, cost: 0, range: 130, damage: 250, cooldown: 15, type: 'aoe', aoeRange: 80, color: '#d1d5db', desc: '더 강한 범위 딜 및 사거리 약간 증가 (스턴 및 상태이상 면역)', immuneToDebuffs: true, attackStyle: 'normal' }
 };
 
 // NEW ENEMY TYPES
@@ -329,10 +332,10 @@ btnUpgrade.addEventListener('click', () => {
     const upgCost = selectedTower.level * 10;
     if (berries >= upgCost) {
         berries -= upgCost;
-        berriesEl.innerText = berries;
+        
         selectedTower.level++;
         selectedTower.totalInvested += upgCost;
-        if (selectedTower.baseId === 'sigilyph') {
+        if (selectedTower.baseId === 'sigilyph' || selectedTower.baseId === 'rowlet') {
             selectedTower.damage += 1;
         } else {
             selectedTower.damage += 5;
@@ -347,7 +350,7 @@ function doEvolve(newBaseId, berryCost, consumeItem) {
     if (berryCost > 0) {
         if (berries < berryCost) return;
         berries -= berryCost;
-        berriesEl.innerText = berries;
+        
         selectedTower.totalInvested += berryCost;
     }
     
@@ -375,7 +378,7 @@ btnCloseUpgrade.addEventListener('click', () => {
 btnSell.addEventListener('click', () => {
     if (!selectedTower) return;
     berries += Math.floor(selectedTower.totalInvested / 2);
-    berriesEl.innerText = berries;
+    
     
     const index = towers.indexOf(selectedTower);
     if (index > -1) towers.splice(index, 1);
@@ -386,6 +389,13 @@ btnSell.addEventListener('click', () => {
 
 // Round and Map System
 let currentRound = 1;
+let isRaidActive = false;
+let raidVirtualHp = 0;
+let raidVirtualMaxHp = 0;
+let clearedRaidsThisRound = [];
+const raidBossData = {
+    'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 30000, speed: 1.5, dmg: 0, reward: 0, skill: 'raidBossTypeNull', cost: 555 }
+};
 const ROUND_MAPS = {
     1: {
         bgColor: '#4ade80',
@@ -433,7 +443,7 @@ function startNextRound() {
     // Reset for new round
     wave = 1;
     berries = 200;
-    berriesEl.innerText = berries;
+    
     waveEl.innerText = `${wave} / 20`;
     
     // Enable the start wave button for the new round
@@ -444,6 +454,10 @@ function startNextRound() {
     towers.length = 0; // Empty the array but keep reference
     enemies.length = 0;
     projectiles.length = 0;
+    isRaidActive = false;
+    clearedRaidsThisRound = [];
+    if (document.getElementById('btn-build-typenull')) document.getElementById('btn-build-typenull').style.display = 'none';
+
     
     // Do not wipe inventory (Keep between rounds)
     renderInventory();
@@ -506,7 +520,7 @@ class Enemy {
         if (this.isDead) return;
 
         if (this.skill === 'synergy' && !ignoreDef) {
-            let count = enemies.filter(e => e.skill === 'synergy').length;
+            let count = window.globalSynergyCount || 0;
             amount = amount / (1 + count * 0.2); // 20% damage reduction per gear
         }
         if (this.status.defDownTimer > 0) {
@@ -524,8 +538,10 @@ class Enemy {
                 enemies.forEach(e => {
                     let dx = e.x - this.x; let dy = e.y - this.y;
                     if (dx*dx + dy*dy <= 10000) {
-                        e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.05); // 5% heal
-                        if (Math.random() < 0.2) visualEffects.push(new BubbleEffect(e.x, e.y, '#22c55e', 20));
+                        if (e.baseData.id !== 'sandygast' && e.baseData.id !== 'palossand') {
+                            e.hp = Math.min(e.maxHp, e.hp + amount * 0.33); // 33% of damage taken
+                            if (Math.random() < 0.2) visualEffects.push(new BubbleEffect(e.x, e.y, '#22c55e', 20));
+                        }
                     }
                 });
             }
@@ -543,12 +559,22 @@ class Enemy {
         this.hp -= amount;
         if (this.hp <= 0) {
             this.isDead = true;
-            berries += this.reward;
-            berriesEl.innerText = berries;
+            
+            if (this.baseData && this.baseData.skill === 'raidBossTypeNull') {
+                isRaidActive = false;
+                clearedRaidsThisRound.push('type_null');
+                document.getElementById('btn-build-typenull').style.display = 'flex';
+                renderBackgroundToOffscreen();
+                visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '레이드 클리어!', '#fcd34d'));
+                alert('전설 레이드 클리어! 타입:널이 아군으로 합류합니다.');
+            } else {
+                berries += this.reward;
+                
+            }
             
             if (attacker && attacker.item === 'leftovers') {
                 lives = Math.min(500, lives + 1);
-                livesEl.innerText = lives;
+                
                 visualEffects.push(new BubbleEffect(attacker.x, attacker.y, '#4ade80', 30));
             }
             
@@ -853,7 +879,7 @@ class Enemy {
         }
 
         if (this.skill === 'synergy') {
-            let count = enemies.filter(e => e.skill === 'synergy').length;
+            let count = window.globalSynergyCount || 0;
             currentSpeed *= (1 + count * 0.1);
         }
 
@@ -874,7 +900,7 @@ class Enemy {
                 }
                 
                 lives -= finalDamage; // Deals damage from afar
-                livesEl.innerText = Math.ceil(Math.max(0, lives));
+                
                 visualEffects.push(new LineEffect(this.x, this.y, BASE_X, BASE_Y, '#94a3b8'));
                 visualEffects.push(new TextEffect(BASE_X, BASE_Y - 20, `-${finalDamage}`, '#ef4444'));
                 
@@ -906,6 +932,22 @@ class Enemy {
             this.progress = this.pathIndex * 1000;
             if (this.pathIndex >= waypoints.length - 1) {
                 // Reached Base
+                if (this.baseData && this.baseData.skill === 'raidBossTypeNull') {
+                    this.x = waypoints[0].x;
+                    this.y = waypoints[0].y;
+                    this.pathIndex = 0;
+                    raidVirtualHp -= 5000;
+                    if (raidVirtualHp <= 0) {
+                        isRaidActive = false;
+                        this.hp = 0;
+                        renderBackgroundToOffscreen();
+                        alert('레이드 실패!');
+                    } else {
+                        visualEffects.push(new TextEffect(this.x, this.y, '루프! 가상체력 감소', '#c084fc'));
+                    }
+                    return; // Skip normal base damage
+                }
+
                 let finalDamage = this.damage;
                 if (finalDamage > 0) {
                     if (this.status.burnTimer > 0) finalDamage = Math.max(1, Math.floor(finalDamage / 2));
@@ -913,7 +955,7 @@ class Enemy {
                 }
                 
                 lives -= finalDamage;
-                livesEl.innerText = Math.ceil(Math.max(0, lives));
+                
                 visualEffects.push(new TextEffect(BASE_X, BASE_Y - 20, `-${finalDamage}`, '#ef4444'));
                 this.hp = 0;
             }
@@ -938,8 +980,12 @@ class Tower {
         const data = POKEMON_DATA[baseId];
         this.totalInvested = data.cost;
         this.range = data.range;
-        this.damage = data.damage;
-        this.cooldown = data.cooldown;
+
+        // 라운드가 지날 때마다 기초 능력치 상승 (데미지 20% 증가)
+        const dmgBoost = 1 + (currentRound - 1) * 0.2;
+
+        this.damage = Math.floor(data.damage * dmgBoost);
+        this.cooldown = data.cooldown; // 공속 증가 없음
         
         this.sleepTimer = 0;
         this.yawnTimer = 0;
@@ -1136,7 +1182,9 @@ class Tower {
                 let rangeSq = this.range * this.range;
                 for (let e of enemies) {
                     let dx = e.x - this.x;
+                    if (dx > this.range || dx < -this.range) continue;
                     let dy = e.y - this.y;
+                    if (dy > this.range || dy < -this.range) continue;
                     if (dx*dx + dy*dy <= rangeSq) {
                         e.applyDamage(this.damage, false, false, this);
                         e.status.slowFactor = data.slowFactor;
@@ -1153,7 +1201,9 @@ class Tower {
                 let rangeSq = this.range * this.range;
                 for (let e of enemies) {
                     let dx = e.x - this.x;
+                    if (dx > this.range || dx < -this.range) continue;
                     let dy = e.y - this.y;
+                    if (dy > this.range || dy < -this.range) continue;
                     if (dx*dx + dy*dy <= rangeSq) {
                         // Use cached progress (updated each frame in Enemy.update)
                         if (e.progress > maxProgress) {
@@ -1167,28 +1217,23 @@ class Tower {
                     if (this.item === 'life_orb') damageMult *= 1.2;
                     if (this.item === 'enigma_berry' && lives <= 250) damageMult *= 1.5;
                     
-                    for (let e of enemies) {
-                        if (e.baseData.skill === 'weakenTowerAura' || e.baseData.skill === 'weakenTowerAuraLarge') {
-                            let auraRange = e.baseData.skill === 'weakenTowerAuraLarge' ? 120 : 90;
-                            let edx = e.x - e.x; // Wait, e.x - this.x
-                            edx = e.x - this.x; let edy = e.y - this.y;
-                            if (edx*edx + edy*edy <= auraRange*auraRange) {
-                                if (!POKEMON_DATA[this.baseId].immuneToDebuffs) {
-                                    damageMult *= 0.8; // 20% reduction
-                                }
-                                break;
+                    for (let e of (window.weakenAuraEnemies || [])) {
+                        let auraRange = e.baseData.skill === 'weakenTowerAuraLarge' ? 120 : 90;
+                        let edx = e.x - this.x; let edy = e.y - this.y;
+                        if (edx*edx + edy*edy <= auraRange*auraRange) {
+                            if (!POKEMON_DATA[this.baseId].immuneToDebuffs) {
+                                damageMult *= 0.8; // 20% reduction
                             }
+                            break;
                         }
                     }
                     
-                    for (let t of towers) {
+                    for (let t of (window.damageAuraTowers || [])) {
                         const auraData = POKEMON_DATA[t.baseId];
-                        if (auraData.hasDamageAura) {
-                            let tdx = t.x - this.x;
-                            let tdy = t.y - this.y;
-                            if (tdx*tdx + tdy*tdy <= auraData.auraRange * auraData.auraRange) {
-                                damageMult = Math.max(damageMult, auraData.auraMult);
-                            }
+                        let tdx = t.x - this.x;
+                        let tdy = t.y - this.y;
+                        if (tdx*tdx + tdy*tdy <= auraData.auraRange * auraData.auraRange) {
+                            damageMult = Math.max(damageMult, auraData.auraMult);
                         }
                     }
                     
@@ -1239,7 +1284,9 @@ class Tower {
                                 let closestX = this.x + proj * dirX;
                                 let closestY = this.y + proj * dirY;
                                 let cx = e.x - closestX;
+                                if (cx > 30 || cx < -30) continue;
                                 let cy = e.y - closestY;
+                                if (cy > 30 || cy < -30) continue;
                                 if (cx*cx + cy*cy < 900) { // 30*30
                                     e.applyDamage(this.damage * damageMult, data.ignoreDef, false, this);
                                     if (data.paralyzeChance && Math.random() < data.paralyzeChance) e.status.paralyzed = true;
@@ -1424,7 +1471,10 @@ class Projectile {
             
             for (let e of enemies) {
                 if (!this.hitTargets.has(e)) {
-                    let dx = e.x - this.x; let dy = e.y - this.y;
+                    let dx = e.x - this.x;
+                    if (dx > 30 || dx < -30) continue;
+                    let dy = e.y - this.y;
+                    if (dy > 30 || dy < -30) continue;
                     if (dx*dx + dy*dy < 900) { // 30*30
                         this.hitTargets.add(e);
                         this.applyEffects(e);
@@ -1462,7 +1512,9 @@ class Projectile {
                 for (let e of enemies) {
                     if (e !== this.target) {
                         let edx = e.x - this.target.x;
+                        if (edx > this.data.aoeRange || edx < -this.data.aoeRange) continue;
                         let edy = e.y - this.target.y;
+                        if (edy > this.data.aoeRange || edy < -this.data.aoeRange) continue;
                         if (edx*edx + edy*edy <= aoeRangeSq) {
                             let oldDamage = this.damage;
                             this.damage *= 0.5;
@@ -1545,7 +1597,7 @@ class LaserEffect {
 function renderBackgroundToOffscreen() {
     const mapData = ROUND_MAPS[currentRound];
     if (!mapData) return;
-    bgCtx.fillStyle = mapData.bgColor; 
+    bgCtx.fillStyle = isRaidActive ? '#1e1b4b' : mapData.bgColor; 
     bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
     
     bgCtx.strokeStyle = 'rgba(255,255,255,0.15)'; bgCtx.lineWidth = 1;
@@ -1659,7 +1711,7 @@ canvas.addEventListener('click', (e) => {
         }
         towers.push(new Tower(cellX, cellY, selectedBuildType));
         berries -= cost;
-        berriesEl.innerText = berries;
+        
         if (tutStep === 1) nextTutorial();
     } else if (!isPath && berries < cost) {
         visualEffects.push(new TextEffect(mouseX, mouseY - 20, "열매 부족!", '#ef4444'));
@@ -1677,10 +1729,34 @@ btnStartWave.addEventListener('click', () => {
 });
 
 // Main Loop
+let lastRenderedBerries = -1;
+let lastRenderedLives = -1;
+
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (berries !== lastRenderedBerries) {
+        berriesEl.innerText = berries;
+        lastRenderedBerries = berries;
+    }
+    if (lives !== lastRenderedLives) {
+        livesEl.innerText = Math.ceil(Math.max(0, lives));
+        lastRenderedLives = lives;
+    }
     drawBackground();
     drawGridHover();
+
+    window.globalSynergyCount = 0;
+    window.damageAuraTowers = window.damageAuraTowers || [];
+    window.weakenAuraEnemies = window.weakenAuraEnemies || [];
+    window.damageAuraTowers.length = 0;
+    window.weakenAuraEnemies.length = 0;
+    for(let i=0; i<enemies.length; i++) {
+        if(enemies[i].skill === 'synergy') window.globalSynergyCount++;
+        if(enemies[i].baseData && (enemies[i].baseData.skill === 'weakenTowerAura' || enemies[i].baseData.skill === 'weakenTowerAuraLarge')) window.weakenAuraEnemies.push(enemies[i]);
+    }
+    for(let i=0; i<towers.length; i++) {
+        if(POKEMON_DATA[towers[i].baseId].hasDamageAura) window.damageAuraTowers.push(towers[i]);
+    }
 
     towers.forEach(t => { t.update(); t.draw(); });
 
@@ -1722,12 +1798,13 @@ function animate() {
             
             const waveBonus = 20 + wave * 10;
             berries += waveBonus;
-            berriesEl.innerText = berries;
+            
             visualEffects.push(new TextEffect(canvas.width / 2 - 50, canvas.height / 2, `웨이브 보상 +${waveBonus}열매!`, '#facc15'));
             
             if (wave === MAX_WAVE) {
                 if (ROUND_MAPS[currentRound + 1]) {
                     startNextRound();
+                    return; // Prevent wave++ and frame rendering for this cycle
                 } else {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                     ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
@@ -1874,7 +1951,15 @@ if (tabStatus) {
 function renderEncyclopedia() {
     if(!encTowersContent || !encEnemiesContent) return;
     encTowersContent.innerHTML = '';
-    Object.keys(POKEMON_DATA).forEach(key => {
+    let keys = Object.keys(POKEMON_DATA);
+    keys.sort((a, b) => {
+        let isA = a.includes('mega_');
+        let isB = b.includes('mega_');
+        if (isA && !isB) return 1;
+        if (!isA && isB) return -1;
+        return 0;
+    });
+    keys.forEach(key => {
         const p = POKEMON_DATA[key];
         encTowersContent.innerHTML += `
             <div style="background: rgba(0,0,0,0.3); border: 1px solid #475569; border-radius: 8px; padding: 15px; text-align: center;">
@@ -2031,16 +2116,42 @@ function renderInventory() {
             slot.style.padding = '5px 10px';
             slot.style.display = 'flex';
             slot.style.alignItems = 'center';
+            slot.style.justifyContent = 'space-between';
             slot.style.gap = '5px';
             const isEquippable = ['rare_candy', 'scope_lens', 'leftovers', 'enigma_berry', 'life_orb', 'lum_berry', 'choice_scarf'].includes(itemInfo.id);
             slot.style.cursor = (itemInfo.id === 'potion' || isEquippable) ? 'pointer' : 'default';
-            slot.innerHTML = `<span>${itemInfo.icon}</span> <span>${itemInfo.name} x${inventory[itemInfo.id]}</span>`;
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.style.display = 'flex';
+            infoDiv.style.alignItems = 'center';
+            infoDiv.style.gap = '5px';
+            infoDiv.innerHTML = `<span>${itemInfo.icon}</span> <span>${itemInfo.name} x${inventory[itemInfo.id]}</span>`;
+            
+            const delBtn = document.createElement('button');
+            delBtn.innerHTML = '🗑️';
+            delBtn.style.background = 'transparent';
+            delBtn.style.border = 'none';
+            delBtn.style.cursor = 'pointer';
+            delBtn.style.padding = '0';
+            delBtn.style.marginLeft = '10px';
+            delBtn.title = '아이템 판매 (반환: 50열매)';
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                inventory[itemInfo.id]--;
+                berries += 50;
+                if (berriesEl) 
+                if (usingItem === itemInfo.id && inventory[itemInfo.id] === 0) usingItem = null;
+                renderInventory();
+            };
+            
+            slot.appendChild(infoDiv);
+            slot.appendChild(delBtn);
             
             if (itemInfo.id === 'potion') {
                 slot.onclick = () => {
                     inventory['potion']--;
                     lives = Math.min(500, lives + 50); // MAX 500
-                    livesEl.innerText = lives;
+                    
                     visualEffects.push(new TextEffect(canvas.width / 2, canvas.height / 2, `체력 +50 회복!`, '#4ade80'));
                     renderInventory();
                 };
@@ -2136,7 +2247,7 @@ function renderShop() {
         buyBtn.addEventListener('click', () => {
             if (berries >= item.price) {
                 berries -= item.price;
-                berriesEl.innerText = berries;
+                
                 shopBerriesDisplay.innerText = berries;
                 
                 // 인벤토리 증가
@@ -2175,3 +2286,73 @@ if (btnCloseShop) {
         if(shopOverlay) shopOverlay.style.display = 'none';
     });
 }
+
+// --- RAID SYSTEM EVENTS ---
+const btnOpenRaid = document.getElementById('btn-open-raid');
+const raidMenu = document.getElementById('raid-menu');
+const btnCloseRaid = document.getElementById('btn-close-raid');
+const btnStartRaidTypeNull = document.getElementById('btn-start-raid-typenull');
+
+if (btnOpenRaid) {
+    btnOpenRaid.addEventListener('click', () => {
+        if (currentRound >= 2) raidMenu.style.display = 'block';
+        else alert('레이드는 2라운드부터 가능합니다!');
+    });
+}
+
+if (btnCloseRaid) {
+    btnCloseRaid.addEventListener('click', () => {
+        raidMenu.style.display = 'none';
+    });
+}
+
+if (btnStartRaidTypeNull) {
+    btnStartRaidTypeNull.addEventListener('click', () => {
+        if (clearedRaidsThisRound.includes('type_null')) {
+            alert('이미 이번 라운드에서 타입:널을 클리어했습니다!');
+            return;
+        }
+        if (berries < raidBossData.type_null.cost) {
+            alert('열매가 부족합니다!');
+            return;
+        }
+        
+        berries -= raidBossData.type_null.cost;
+        
+        raidMenu.style.display = 'none';
+        
+        // Start Raid
+        isRaidActive = true;
+        raidVirtualMaxHp = 10000;
+        raidVirtualHp = raidVirtualMaxHp;
+        
+        renderBackgroundToOffscreen();
+        visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '전설 레이드 시작!', '#c084fc'));
+        
+        let bossData = Object.assign({}, raidBossData.type_null);
+        // Multiply boss HP by round factor? 
+        bossData.hp = Math.floor(bossData.hp * (1 + (currentRound-1)*0.5));
+        let enemy = new Enemy(bossData);
+        enemy.x = waypoints[0].x;
+        enemy.y = waypoints[0].y;
+        enemies.push(enemy);
+    });
+}
+
+// Override gameLoop UI drawing for virtual HP
+const originalDrawBackground = drawBackground;
+drawBackground = function() {
+    originalDrawBackground();
+    if (isRaidActive) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(10, 10, 200, 30);
+        ctx.fillStyle = '#1e1b4b';
+        ctx.fillRect(12, 12, 196, 26);
+        let hpRatio = Math.max(0, raidVirtualHp / raidVirtualMaxHp);
+        ctx.fillStyle = '#c084fc';
+        ctx.fillRect(12, 12, 196 * hpRatio, 26);
+        ctx.fillStyle = '#fff';
+        ctx.font = '14px sans-serif';
+        ctx.fillText(\레이드 가상 체력: \\, 20, 30);
+    }
+};
