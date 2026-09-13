@@ -91,19 +91,19 @@ const POKEMON_DATA = {
     'sigilyph': { name: '심보러', spriteId: 561, cost: 250, range: 0, damage: 10, cooldown: 120, type: 'global', color: '#a855f7', desc: '고대 도시를 지키던 수호신. (맵 전체 공격 + 10% 혼란)', confuseChance: 0.1 },
     
     'litten': { name: '냐오불', spriteId: 725, cost: 50, range: 80, damage: 25, cooldown: 40, type: 'single', color: '#ef4444', desc: '불꽃 고양이! (근접 단일 공격)', evolveLvl: 8, evolveTo: 'torracat', attackStyle: 'fire' },
-    'torracat': { name: '냐오히트', spriteId: 726, cost: 0, range: 120, damage: 55, cooldown: 30, type: 'aoe', aoeRange: 70, color: '#dc2626', desc: '목의 방울에서 불꽃을 내뿜습니다. (범위 공격 + 공속 증가 + 20% 화상)', burnChance: 0.2, evolveLvl: 15, evolveCost: 300, evolveTo: 'incineroar', attackStyle: 'fire' },
-    'incineroar': { name: '어흥염', spriteId: 727, cost: 0, range: 190, damage: 120, cooldown: 40, type: 'aoe', aoeRange: 90, color: '#b91c1c', desc: '강력한 힐 악역 레슬러! (범위 딜 + 거북왕 범위 내 적에게 영구 공깎 25% 위협 펄스)', hasIntimidate: true, auraRange: 190, attackStyle: 'fire' },
+    'torracat': { name: '냐오히트', spriteId: 726, cost: 0, range: 120, damage: 55, cooldown: 40, type: 'aoe', aoeRange: 70, color: '#dc2626', desc: '목의 방울에서 불꽃을 내뿜습니다. (범위 공격 + 공속 증가 + 20% 화상)', burnChance: 0.2, evolveLvl: 15, evolveCost: 300, evolveTo: 'incineroar', attackStyle: 'fire' },
+    'incineroar': { name: '어흥염', spriteId: 727, cost: 0, range: 190, damage: 120, cooldown: 60, type: 'aoe', aoeRange: 90, color: '#b91c1c', desc: '강력한 힐 악역 레슬러! (범위 딜 + 거북왕 범위 내 적에게 영구 공깎 25% 위협 펄스)', hasIntimidate: true, auraRange: 190, attackStyle: 'fire' },
 
     'popplio': { name: '누리공', spriteId: 728, cost: 50, range: 130, damage: 15, cooldown: 45, type: 'aoe', aoeRange: 60, color: '#3b82f6', desc: '물풍선을 만들어 공격합니다. (넓은 범위 + 10% 적 공격력 하락)', atkDownFactor: 0.9, debuffDur: 120, evolveLvl: 8, evolveTo: 'brionne', attackStyle: 'water' },
     'brionne': { name: '키요공', spriteId: 729, cost: 0, range: 160, damage: 35, cooldown: 45, type: 'aoe', aoeRange: 80, color: '#2563eb', desc: '춤추며 물풍선을 더 멀리 넓게 던집니다. (사거리/범위 증가 + 10% 적 공깎)', atkDownFactor: 0.9, debuffDur: 150, evolveLvl: 15, evolveCost: 300, evolveTo: 'primarina', attackStyle: 'water' },
     'primarina': { name: '누리레느', spriteId: 730, cost: 0, range: 190, damage: 95, cooldown: 35, type: 'aoe', aoeRange: 100, color: '#1d4ed8', desc: '아름다운 노랫소리! (공속/딜 대폭 증가 + 15% 적 공깎)', atkDownFactor: 0.85, debuffDur: 180, attackStyle: 'water' },
 
     'rowlet': { name: '나몰빼미', spriteId: 722, cost: 50, range: 150, damage: 3, cooldown: 50, type: 'spread', spreadCount: 5, color: '#22c55e', desc: '소리 없이 다가가 깃털을 날립니다! (5연발 관통 깃털 + 5% 밀치기)', knockbackChance: 0.05, evolveLvl: 8, evolveTo: 'dartrix', attackStyle: 'leaf' },
-    'dartrix': { name: '빼미스로우', spriteId: 723, cost: 0, range: 180, damage: 12, cooldown: 40, type: 'spread', spreadCount: 5, color: '#16a34a', desc: '앞머리를 신경 쓰는 멋쟁이. (공속/딜/사거리 증가 + 5% 밀치기)', knockbackChance: 0.05, evolveLvl: 15, evolveCost: 300, evolveTo: 'decidueye', attackStyle: 'leaf' },
-    'decidueye': { name: '모크나이퍼', spriteId: 724, cost: 0, range: 220, damage: 30, cooldown: 35, type: 'spread', spreadCount: 7, color: '#15803d', desc: '그림자 꿰매기! (7연발 관통 깃털 + 적 회복 봉인)', healBlock: true, debuffDur: 200, attackStyle: 'leaf' },
+    'dartrix': { name: '빼미스로우', spriteId: 723, cost: 0, range: 180, damage: 5, cooldown: 50, type: 'spread', spreadCount: 5, color: '#16a34a', desc: '앞머리를 신경 쓰는 멋쟁이. (공속/딜/사거리 증가 + 5% 밀치기)', knockbackChance: 0.05, evolveLvl: 15, evolveCost: 300, evolveTo: 'decidueye', attackStyle: 'leaf' },
+    'decidueye': { name: '모크나이퍼', spriteId: 724, cost: 0, range: 220, damage: 8, cooldown: 50, type: 'spread', spreadCount: 7, color: '#15803d', desc: '그림자 꿰매기! (7연발 관통 깃털 + 적 회복 봉인)', healBlock: true, debuffDur: 200, attackStyle: 'leaf' },
 
-    'type_null': { name: '타입:널', spriteId: 772, cost: 0, range: 100, damage: 150, cooldown: 15, type: 'single', color: '#9ca3af', desc: '강력한 스펙 근접 단일 딜 (스턴 및 상태이상 면역)', immuneToDebuffs: true, evolveLvl: 15, evolveCost: 0, evolveTo: 'silvally', attackStyle: 'normal' },
-    'silvally': { name: '실버디', spriteId: 773, cost: 0, range: 130, damage: 250, cooldown: 15, type: 'aoe', aoeRange: 80, color: '#d1d5db', desc: '더 강한 범위 딜 및 사거리 약간 증가 (스턴 및 상태이상 면역)', immuneToDebuffs: true, attackStyle: 'normal' }
+    'type_null': { name: '타입:널', spriteId: 772, cost: 0, range: 100, damage: 150, cooldown: 10, type: 'single', color: '#9ca3af', desc: '빠르고 강력한 근접 단일 딜 (스턴 및 상태이상 면역)', immuneToDebuffs: true, evolveLvl: 15, evolveCost: 0, evolveTo: 'silvally', attackStyle: 'normal' },
+    'silvally': { name: '실버디', spriteId: 773, cost: 0, range: 130, damage: 300, cooldown: 10, type: 'aoe', aoeRange: 80, color: '#d1d5db', desc: '더 강한 범위 딜 및 사거리 증가 (스턴 및 상태이상 면역)', immuneToDebuffs: true, attackStyle: 'normal' }
 };
 
 // NEW ENEMY TYPES
@@ -252,6 +252,7 @@ document.querySelectorAll('.tower-btn').forEach(btn => {
 function updateUI() {
     if (selectedTower) {
         buildMenu.style.display = 'none';
+        document.getElementById('top-buttons-container').style.display = 'none';
         upgradeMenu.style.display = 'flex';
         
         const data = POKEMON_DATA[selectedTower.baseId];
@@ -319,6 +320,7 @@ function updateUI() {
         }
     } else {
         buildMenu.style.display = 'flex';
+        document.getElementById('top-buttons-container').style.display = 'block';
         upgradeMenu.style.display = 'none';
     }
 }
@@ -335,7 +337,7 @@ btnUpgrade.addEventListener('click', () => {
         
         selectedTower.level++;
         selectedTower.totalInvested += upgCost;
-        if (selectedTower.baseId === 'sigilyph' || selectedTower.baseId === 'rowlet') {
+        if (selectedTower.baseId === 'sigilyph' || selectedTower.baseId === 'rowlet' || selectedTower.baseId === 'dartrix' || selectedTower.baseId === 'decidueye') {
             selectedTower.damage += 1;
         } else {
             selectedTower.damage += 5;
@@ -1804,6 +1806,7 @@ function animate() {
             if (wave === MAX_WAVE) {
                 if (ROUND_MAPS[currentRound + 1]) {
                     startNextRound();
+                    requestAnimationFrame(animate);
                     return; // Prevent wave++ and frame rendering for this cycle
                 } else {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -2353,6 +2356,6 @@ drawBackground = function() {
         ctx.fillRect(12, 12, 196 * hpRatio, 26);
         ctx.fillStyle = '#fff';
         ctx.font = '14px sans-serif';
-        ctx.fillText(\레이드 가상 체력: \\, 20, 30);
+        ctx.fillText(`레이드 가상 체력: ${Math.max(0, Math.floor(raidVirtualHp))} / ${raidVirtualMaxHp}`, 20, 30);
     }
 };

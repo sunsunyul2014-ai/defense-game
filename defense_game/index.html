@@ -141,12 +141,15 @@
                 <p>🌊 웨이브: <span id="wave">1</span> / 20</p>
             </div>
 
-            <div style="display: flex; gap: 5px; margin-top: 5px;">
-                <button id="btn-open-enc" style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #a78bfa; font-size: 0.9rem;">📖 도감</button>
-                <button id="btn-open-shop" style="flex: 1; background: linear-gradient(135deg, #22c55e, #16a34a); border-color: #4ade80; font-size: 0.9rem;">🏪 상점</button>
-            </div>
-            <div style="margin-top: 5px;">
-                <button id="btn-open-raid" style="width: 100%; background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; font-size: 0.9rem; padding: 10px; font-weight: bold;">⚔️ 레이드 (2라운드부터)</button>
+            <div id="top-buttons-container">
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button id="btn-open-enc" style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #a78bfa; font-size: 0.9rem;">📖 도감</button>
+                    <button id="btn-open-shop" style="flex: 1; background: linear-gradient(135deg, #22c55e, #16a34a); border-color: #4ade80; font-size: 0.9rem;">🏪 상점</button>
+                </div>
+                <div style="margin-top: 5px;">
+                    <button id="btn-open-raid" style="width: 100%; background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; font-size: 0.9rem; padding: 10px; font-weight: bold;">⚔️ 레이드 (2라운드부터)</button>
+                </div>
+                <button id="btn-start-wave" style="margin-top: 5px; width: 100%;">웨이브 시작!</button>
             </div>
             
             <div id="build-menu" class="controls" style="max-height: 250px; overflow-y: auto;">
@@ -215,7 +218,6 @@
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/772.png" class="btn-sprite">
                     타입:널 (0)
                 </button>
-                <button id="btn-start-wave">웨이브 시작!</button>
             </div>
 
             <div id="upgrade-menu" class="controls" style="display: none;">
