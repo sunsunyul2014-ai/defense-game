@@ -214,9 +214,17 @@
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/722.png" class="btn-sprite">
                     나몰빼미 (50)
                 </button>
-                <button class="tower-btn" data-type="type_null" id="btn-build-typenull" style="display: none; background: linear-gradient(135deg, #6b7280, #374151); border-color: #9ca3af;">
+                <button class="tower-btn" data-type="gengar">
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" class="btn-sprite">
+                    팬텀 (0)
+                </button>
+                <button id="btn-build-typenull" class="tower-btn" data-type="type_null" style="display: none; background: linear-gradient(135deg, #a855f7, #6b21a8); border-color: #a855f7;">
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/772.png" class="btn-sprite">
                     타입:널 (0)
+                </button>
+                <button id="btn-build-zeraora" class="tower-btn" data-type="zeraora" style="display: none; background: linear-gradient(135deg, #facc15, #f59e0b); border-color: #facc15;">
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/807.png" class="btn-sprite">
+                    제라오라 (0)
                 </button>
             </div>
 
@@ -249,11 +257,18 @@
             <div id="raid-menu" class="controls" style="display: none; position: absolute; z-index: 100; left: 20px; top: 100px; max-width: 300px; max-height: 400px; overflow-y: auto; border: 2px solid #a855f7; box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
                 <h2 style="color: #c084fc; text-align: center; margin-bottom: 15px;">⚔️ 전설 레이드</h2>
                 <button id="btn-close-raid" class="secondary" style="position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; padding: 0;">X</button>
-                <div style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 10px; margin-bottom: 10px; text-align: center;">
-                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/772.png" style="width: 80px; height: 80px; filter: drop-shadow(0 0 5px #c084fc);">
-                    <h3 style="margin: 5px 0;">타입:널 (비용: 555)</h3>
-                    <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px;">스턴/상태이상 면역의 강력한 보스! 처치 시 아군으로 합류합니다.</p>
-                    <button id="btn-start-raid-typenull" style="background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; width: 100%;">도전하기</button>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <button id="btn-prev-raid" class="secondary" style="padding: 5px 10px; border-radius: 5px;">◀</button>
+                    <span id="raid-boss-indicator" style="color: #cbd5e1; font-size: 0.9rem;">1 / 2</span>
+                    <button id="btn-next-raid" class="secondary" style="padding: 5px 10px; border-radius: 5px;">▶</button>
+                </div>
+
+                <div id="raid-boss-container" style="background: rgba(0,0,0,0.4); border-radius: 8px; padding: 10px; text-align: center;">
+                    <img id="raid-boss-img" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/772.png" style="width: 80px; height: 80px; filter: drop-shadow(0 0 5px #c084fc);">
+                    <h3 id="raid-boss-name" style="margin: 5px 0;">타입:널 (비용: 555)</h3>
+                    <p id="raid-boss-desc" style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 10px;">스턴/상태이상 면역의 강력한 보스! 처치 시 아군으로 합류합니다.</p>
+                    <button id="btn-start-raid" style="background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; width: 100%;">도전하기</button>
                 </div>
             </div>
 

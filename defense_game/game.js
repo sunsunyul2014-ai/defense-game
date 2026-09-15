@@ -46,8 +46,9 @@ const POKEMON_DATA = {
     'mega_lucario': { name: '메가루카리오', spriteId: 10059, cost: 0, range: 240, damage: 160, cooldown: 35, type: 'aoe', aoeRange: 100, immuneToDebuffs: true, ignoreDef: true, defDownFactor: 1.3, debuffDur: 200, atkSpeedStack: true, color: '#3b82f6', desc: '사거리, 딜 대폭 증가. 모든 디버프 완전 면역!', attackStyle: 'water' },
     'mega_gengar': { name: '메가팬텀', spriteId: 10038, cost: 0, range: 220, damage: 150, cooldown: 45, type: 'aoe', aoeRange: 130, debuffDur: 300, defDownFactor: 1.6, atkDownFactor: 0.4, poisonChance: 0.2, color: '#9333ea', desc: '범위 증가 및 독 20% 추가! 방어/공격 하락(지속 시간 증가).', attackStyle: 'shadow' },
     'mega_alakazam': { name: '메가후딘', spriteId: 10037, cost: 0, range: 250, damage: 250, cooldown: 25, type: 'aoe', aoeRange: 130, knockbackChance: 0.15, paralyzeChance: 0.1, color: '#fcd34d', desc: '딜, 사거리, 범위, 공속 대폭 증가! 15% 밀치기와 10% 마비.', attackStyle: 'psychic' },
-
     
+    'zeraora': { name: '제라오라', spriteId: 807, cost: 0, range: 140, damage: 30, cooldown: 8, type: 'aoe', aoeRange: 80, paralyzeChance: 0.05, color: '#facc15', desc: '빠른 공속의 근접 광역 공격! (5% 마비)', itemEvolutions: { 'mega_zeraora_nite': 'mega_zeraora' }, attackStyle: 'lightning' },
+    'mega_zeraora': { name: '메가제라오라', spriteId: 807, cost: 0, range: 160, damage: 45, cooldown: 8, type: 'aoe', aoeRange: 100, paralyzeChance: 0.1, color: '#f59e0b', desc: '마비된 적에게 1.5배의 피해!', bonusDamageToParalyzed: 1.5, attackStyle: 'lightning' },
     'squirtle': { name: '꼬부기', spriteId: 7, cost: 50, range: 100, damage: 10, cooldown: 50, type: 'aura', color: '#3b82f6', desc: '꼬부기단 출신일지도 모릅니다. 선글라스는 어딨지? (주변 광역 + 약한 둔화)', slowFactor: 0.8, slowDur: 60, evolveLvl: 8, evolveTo: 'wartortle' },
     'wartortle': { name: '어니부기', spriteId: 8, cost: 0, range: 130, damage: 25, cooldown: 45, type: 'aura', color: '#2563eb', desc: '귀가 날개처럼 생겼지만 날지는 못합니다. (광역 범위 및 딜 증가 + 둔화)', slowFactor: 0.7, slowDur: 80, evolveLvl: 15, evolveCost: 300, evolveTo: 'blastoise' },
     'blastoise': { name: '거북왕', spriteId: 9, cost: 0, range: 190, damage: 80, cooldown: 40, type: 'aura', color: '#1d4ed8', desc: '등껍질의 대포로 뭐든지 날려버립니다! (넓은 광역 + 강한 둔화)', slowFactor: 0.5, slowDur: 120, itemEvolutions: { 'mega_stone_blastoise': 'mega_blastoise' } },
@@ -396,7 +397,8 @@ let raidVirtualHp = 0;
 let raidVirtualMaxHp = 0;
 let clearedRaidsThisRound = [];
 const raidBossData = {
-    'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 6000, speed: 1.5, dmg: 30, reward: 0, skill: 'raidBossTypeNull', cost: 555 }
+    'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 6000, speed: 1.5, dmg: 30, reward: 0, skill: 'raidBossTypeNull', cost: 555 },
+    'zeraora': { id: 'boss_zeraora', name: '제라오라', spriteId: 807, hp: 5000, speed: 2.5, dmg: 30, reward: 0, skill: 'raidBossZeraora', cost: 600, immuneToDebuffs: true }
 };
 const ROUND_MAPS = {
     1: {
@@ -569,9 +571,16 @@ class Enemy {
                 renderBackgroundToOffscreen();
                 visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '레이드 클리어!', '#fcd34d'));
                 alert('전설 레이드 클리어! 타입:널이 아군으로 합류합니다.');
+            } else if (this.baseData && this.baseData.skill === 'raidBossZeraora') {
+                isRaidActive = false;
+                clearedRaidsThisRound.push('zeraora');
+                window.zeraoraUnlocked = true;
+                document.getElementById('btn-build-zeraora').style.display = 'flex';
+                renderBackgroundToOffscreen();
+                visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '레이드 클리어!', '#fcd34d'));
+                alert('전설 레이드 클리어! 제라오라가 아군으로 합류합니다.');
             } else {
                 berries += this.reward;
-                
             }
             
             if (attacker && attacker.item === 'leftovers') {
@@ -923,6 +932,18 @@ class Enemy {
             return; // Stops moving
         }
 
+        if (this.skill === 'raidBossZeraora' && frame % 120 === 0) { // 매 2초마다 타워 마비
+            visualEffects.push(new BubbleEffect(this.x, this.y, '#facc15', 30));
+            towers.forEach(t => {
+                if (Math.hypot(t.x - this.x, t.y - this.y) <= 150) {
+                    if (t.immuneTimer <= 0 && !POKEMON_DATA[t.baseId].immuneToDebuffs) {
+                        t.stunTimer = Math.max(t.stunTimer, 60); // 1초 마비
+                        visualEffects.push(new TextEffect(t.x, t.y - 20, '마비!', '#facc15'));
+                    }
+                }
+            });
+        }
+
         const target = waypoints[this.pathIndex + 1];
         if (!target) return;
 
@@ -940,7 +961,7 @@ class Enemy {
             this.progress = this.pathIndex * 1000;
             if (this.pathIndex >= waypoints.length - 1) {
                 // Reached Base
-                if (this.baseData && this.baseData.skill === 'raidBossTypeNull') {
+                if (this.baseData && (this.baseData.skill === 'raidBossTypeNull' || this.baseData.skill === 'raidBossZeraora')) {
                     this.x = waypoints[0].x;
                     this.y = waypoints[0].y;
                     this.pathIndex = 0;
@@ -1194,9 +1215,12 @@ class Tower {
                     let dy = e.y - this.y;
                     if (dy > this.range || dy < -this.range) continue;
                     if (dx*dx + dy*dy <= rangeSq) {
-                        e.applyDamage(this.damage, false, false, this);
+                        let finalDamage = this.damage;
+                        if (data.bonusDamageToParalyzed && (e.status.paralyzed || e.status.stunTimer > 0)) finalDamage *= data.bonusDamageToParalyzed;
+                        e.applyDamage(finalDamage, false, false, this);
                         e.status.slowFactor = data.slowFactor;
                         e.status.slowTimer = data.slowDur;
+                        if (data.paralyzeChance && Math.random() < data.paralyzeChance) e.status.paralyzed = true;
                         hitAny = true;
                         visualEffects.push(new BubbleEffect(e.x, e.y, data.color, 20));
                     }
@@ -1316,12 +1340,26 @@ class Tower {
                         }
                     } else {
                         this.attackFrame = 8; // trigger recoil
-                        projectiles.push(new Projectile(this.x, this.y, bestEnemy, this, damageMult));
+                        let enemy = bestEnemy;
+                        let baseDmg = this.damage * damageMult;
+                        if (this.data && this.data.bonusDamageToParalyzed && (enemy.status.paralyzed || enemy.status.stunTimer > 0)) baseDmg *= this.data.bonusDamageToParalyzed;
+                        
+                        enemy.applyDamage(baseDmg, data.ignoreDef, false, this);
+                        
+                        if (data.slowDur) {
+                            enemy.status.slowFactor = data.slowFactor;
+                            enemy.status.slowTimer = data.slowDur;
+                        }
+                        if (data.paralyzeChance && Math.random() < data.paralyzeChance) enemy.status.paralyzed = true;
+
                         if (data.multiHit && data.multiHit > 1) {
                             for (let i = 1; i < data.multiHit; i++) {
                                 setTimeout(() => {
                                     let t = (bestEnemy && bestEnemy.hp > 0) ? bestEnemy : enemies.find(e => e.hp > 0);
-                                    if (t) projectiles.push(new Projectile(this.x, this.y, t, this, damageMult));
+                                    if (t) {
+                                        t.applyDamage(baseDmg, data.ignoreDef, false, this);
+                                        if (this.data && this.data.paralyzeChance && Math.random() < this.data.paralyzeChance) t.status.paralyzed = true;
+                                    }
                                 }, (data.multiHitDelay || 10) * 16.66 * i);
                             }
                         }
@@ -1442,7 +1480,12 @@ class Projectile {
     }
 
     applyEffects(enemy) {
-        enemy.applyDamage(this.damage, this.data.ignoreDef, false, this.sourceTower);
+        let finalDamage = this.damage;
+        if (this.data.bonusDamageToParalyzed && (enemy.status.paralyzed || enemy.status.stunTimer > 0)) finalDamage *= this.data.bonusDamageToParalyzed;
+        
+        enemy.applyDamage(finalDamage, this.data.ignoreDef, false, this.sourceTower);
+        
+        if (enemy.baseData.immuneToDebuffs) return;
         
         if (this.data.burnChance && Math.random() < this.data.burnChance) enemy.status.burnTimer = 300;
         if (this.data.poisonChance && Math.random() < this.data.poisonChance) enemy.status.poisonTimer = 300;
@@ -2107,7 +2150,8 @@ const SHOP_ITEM_POOL = [
     { id: 'mega_stone_raichu_y', name: '메가라이츄Y나이트', desc: '라이츄를 메가라이츄Y로 진화 (키스톤 필요)', price: 400, icon: '🌩️' },
     { id: 'mega_stone_lucario', name: '메가루카리오나이트', desc: '루카리오를 메가루카리오로 진화 (키스톤 필요)', price: 400, icon: '🥊' },
     { id: 'mega_stone_gengar', name: '메가팬텀나이트', desc: '팬텀을 메가팬텀으로 진화 (키스톤 필요)', price: 400, icon: '👻' },
-    { id: 'mega_stone_alakazam', name: '메가후딘나이트', desc: '후딘을 메가후딘으로 진화 (키스톤 필요)', price: 400, icon: '🥄' }
+    { id: 'mega_stone_alakazam', name: '메가후딘나이트', desc: '후딘을 메가후딘으로 진화 (키스톤 필요)', price: 400, icon: '🥄' },
+    { id: 'mega_zeraora_nite', name: '메가제라오라나이트', desc: '제라오라를 메가제라오라로 진화 (키스톤 필요)', price: 400, icon: '⚡' }
 ];
 
 let currentShopItems = [null, null, null];
@@ -2115,7 +2159,7 @@ let inventory = {
     'fire_stone': 0, 'water_stone': 0, 'leaf_stone': 0, 
     'thunder_stone': 0, 'ice_stone': 0, 'potion': 0, 'rare_candy': 0,
     'scope_lens': 0, 'leftovers': 0, 'enigma_berry': 0, 'life_orb': 0, 'lum_berry': 0, 'choice_scarf': 0,
-    'keystone': 0, 'mega_stone_x': 0, 'mega_stone_y': 0, 'mega_stone_venusaur': 0, 'mega_stone_blastoise': 0, 'mega_stone_raichu_x': 0, 'mega_stone_raichu_y': 0, 'mega_stone_lucario': 0, 'mega_stone_gengar': 0, 'mega_stone_alakazam': 0
+    'keystone': 0, 'mega_stone_x': 0, 'mega_stone_y': 0, 'mega_stone_venusaur': 0, 'mega_stone_blastoise': 0, 'mega_stone_raichu_x': 0, 'mega_stone_raichu_y': 0, 'mega_stone_lucario': 0, 'mega_stone_gengar': 0, 'mega_stone_alakazam': 0, 'mega_zeraora_nite': 0
 };
 let usingItem = null;
 
@@ -2210,12 +2254,15 @@ function getRandomShopItem() {
         if (item.id === 'keystone') {
             return inventory['keystone'] === 0 && !currentShopItems.some(i => i && i.id === 'keystone');
         }
+        if (item.id === 'mega_zeraora_nite') {
+            return window.zeraoraUnlocked; // 제라오라가 해금된 경우에만 상점에 등장
+        }
         return true;
     });
     
     let totalWeight = 0;
     pool.forEach(item => {
-        if (item.id.startsWith('mega_stone')) item.weight = 0.5;
+        if (item.id.startsWith('mega_')) item.weight = 0.5;
         else if (item.id === 'keystone') item.weight = 3;
         else item.weight = 10;
         totalWeight += item.weight;
@@ -2311,12 +2358,62 @@ if (btnCloseShop) {
 const btnOpenRaid = document.getElementById('btn-open-raid');
 const raidMenu = document.getElementById('raid-menu');
 const btnCloseRaid = document.getElementById('btn-close-raid');
-const btnStartRaidTypeNull = document.getElementById('btn-start-raid-typenull');
+const btnStartRaid = document.getElementById('btn-start-raid');
+const btnPrevRaid = document.getElementById('btn-prev-raid');
+const btnNextRaid = document.getElementById('btn-next-raid');
+const raidBossIndicator = document.getElementById('raid-boss-indicator');
+const raidBossImg = document.getElementById('raid-boss-img');
+const raidBossName = document.getElementById('raid-boss-name');
+const raidBossDesc = document.getElementById('raid-boss-desc');
+
+let currentRaidIndex = 0;
+const availableRaids = [
+    {
+        id: 'type_null',
+        name: '타입:널',
+        sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/772.png',
+        cost: 555,
+        desc: '스턴/상태이상 면역의 강력한 보스! 처치 시 아군으로 합류합니다.'
+    },
+    {
+        id: 'zeraora',
+        name: '제라오라',
+        sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/807.png',
+        cost: 600,
+        desc: '초고속 이동과 주변을 마비시키는 능력! 처치 시 아군으로 합류합니다.'
+    }
+];
+
+function updateRaidUI() {
+    const raidInfo = availableRaids[currentRaidIndex];
+    raidBossIndicator.innerText = `${currentRaidIndex + 1} / ${availableRaids.length}`;
+    raidBossImg.src = raidInfo.sprite;
+    raidBossName.innerText = `${raidInfo.name} (비용: ${raidInfo.cost})`;
+    raidBossDesc.innerText = raidInfo.desc;
+}
+
+if (btnPrevRaid) {
+    btnPrevRaid.addEventListener('click', () => {
+        currentRaidIndex = (currentRaidIndex > 0) ? currentRaidIndex - 1 : availableRaids.length - 1;
+        updateRaidUI();
+    });
+}
+
+if (btnNextRaid) {
+    btnNextRaid.addEventListener('click', () => {
+        currentRaidIndex = (currentRaidIndex < availableRaids.length - 1) ? currentRaidIndex + 1 : 0;
+        updateRaidUI();
+    });
+}
 
 if (btnOpenRaid) {
     btnOpenRaid.addEventListener('click', () => {
-        if (currentRound >= 2) raidMenu.style.display = 'block';
-        else alert('레이드는 2라운드부터 가능합니다!');
+        if (currentRound >= 2) {
+            raidMenu.style.display = 'block';
+            updateRaidUI();
+        } else {
+            alert('레이드는 2라운드부터 가능합니다!');
+        }
     });
 }
 
@@ -2326,18 +2423,24 @@ if (btnCloseRaid) {
     });
 }
 
-if (btnStartRaidTypeNull) {
-    btnStartRaidTypeNull.addEventListener('click', () => {
-        if (clearedRaidsThisRound.includes('type_null')) {
-            alert('이미 이번 라운드에서 타입:널을 클리어했습니다!');
+if (btnStartRaid) {
+    btnStartRaid.addEventListener('click', () => {
+        const raidInfo = availableRaids[currentRaidIndex];
+        
+        if (isRaidActive) {
+            alert('이미 레이드가 진행 중입니다!');
             return;
         }
-        if (berries < raidBossData.type_null.cost) {
-            alert('열매가 부족합니다!');
+        if (clearedRaidsThisRound.includes(raidInfo.id)) {
+            alert('이미 이번 라운드에 클리어한 레이드입니다!');
+            return;
+        }
+        if (berries < raidInfo.cost) {
+            alert(`열매가 부족합니다! (필요: ${raidInfo.cost})`);
             return;
         }
         
-        berries -= raidBossData.type_null.cost;
+        berries -= raidInfo.cost;
         
         raidMenu.style.display = 'none';
         
@@ -2349,8 +2452,7 @@ if (btnStartRaidTypeNull) {
         renderBackgroundToOffscreen();
         visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '전설 레이드 시작!', '#c084fc'));
         
-        let bossData = Object.assign({}, raidBossData.type_null);
-        // Multiply boss HP by round factor? 
+        let bossData = Object.assign({}, raidBossData[raidInfo.id]);
         bossData.hp = Math.floor(bossData.hp * (1 + (currentRound-1)*0.5));
         let enemy = new Enemy(bossData);
         enemy.x = waypoints[0].x;
