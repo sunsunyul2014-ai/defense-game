@@ -74,7 +74,7 @@ const POKEMON_DATA = {
     'kadabra': { name: '윤겔라', spriteId: 64, cost: 0, range: 140, damage: 55, cooldown: 45, type: 'aoe', aoeRange: 70, color: '#eab308', desc: '은수저를 들고 다니는 사이코패스. 숟가락 구부리기의 달인! (강력한 범위 피해 + 10% 밀치기)', knockbackChance: 0.1, evolveLvl: 25, evolveCost: 400, evolveTo: 'alakazam', attackStyle: 'psychic' },
     'alakazam': { name: '후딘', spriteId: 65, cost: 0, range: 190, damage: 120, cooldown: 40, type: 'aoe', aoeRange: 90, color: '#ca8a04', desc: 'IQ 500! 슈퍼컴퓨터보다 똑똑합니다. 숟가락도 2개! (초광역 폭딜 + 10% 밀치기)', knockbackChance: 0.1, attackStyle: 'psychic', itemEvolutions: { 'mega_stone_alakazam': 'mega_alakazam' } },
 
-    'magnemite': { name: '코일', spriteId: 81, cost: 200, range: 150, damage: 18, cooldown: 60, type: 'laser', laserWidth: 8, color: '#94a3b8', desc: '찌릿찌릿! 전자파를 너무 좋아해서 발전소에 자주 출몰합니다. (일직선 관통 레이저 + 10% 마비)', paralyzeChance: 0.1, evolveLvl: 8, evolveTo: 'magneton' },
+    'magnemite': { name: '코일', spriteId: 81, cost: 180, range: 150, damage: 18, cooldown: 60, type: 'laser', laserWidth: 8, color: '#94a3b8', desc: '찌릿찌릿! 전자파를 너무 좋아해서 발전소에 자주 출몰합니다. (일직선 관통 레이저 + 10% 마비)', paralyzeChance: 0.1, evolveLvl: 8, evolveTo: 'magneton' },
     'magneton': { name: '레어코일', spriteId: 82, cost: 0, range: 160, damage: 40, cooldown: 45, type: 'laser', laserWidth: 15, color: '#64748b', desc: '코일 3마리가 합체! 근데 왜 뇌는 하나일까요? (광폭 관통 레이저 + 15% 마비)', paralyzeChance: 0.15, evolveLvl: 15, evolveCost: 350, evolveTo: 'magnezone' },
     'magnezone': { name: '자포코일', spriteId: 462, cost: 0, range: 180, damage: 85, cooldown: 45, type: 'laser', laserWidth: 25, color: '#334155', desc: 'UFO로 자주 오해받습니다. 강려크한 자기장 방어막 전개! (상태이상 완벽 면역 + 즉사급 관통 레이저 + 20% 마비)', paralyzeChance: 0.2, immuneToDebuffs: true },
 
@@ -119,7 +119,7 @@ const ENEMY_TYPES = [
     { id: 'butterfree', name:'버터플', spriteId: 12, hp: 180, speed: 1.4, dmg: 15, reward: 25, skill: 'sleep', desc: '날갯짓으로 타워들을 쿨쿨 재워버리는(수면가루) 무서운 나비!' },
     { id: 'beedrill', name:'독침붕', spriteId: 15, hp: 160, speed: 1.8, dmg: 25, reward: 25, desc: '성질이 아주 사납고 속도가 엄청나게 빠릅니다. 벌집을 건드린 대가죠!' },
     { id: 'pidgeot', name:'피죤투', spriteId: 18, hp: 300, speed: 1.6, dmg: 10, reward: 35, skill: 'ranged', desc: '마하 2의 속도로 날아 맵 멀리서 기지를 저격(원거리 공격)하는 강적.' },
-    { id: 'snorlax', name:'잠만보', spriteId: 143, hp: 1200, speed: 0.5, dmg: 50, reward: 80, skill: 'yawn', desc: '1라운드의 보스! 엄청난 체력과, 타워를 광역으로 잠재우는 하품을 씁니다.' },
+    { id: 'snorlax', name:'잠만보', spriteId: 143, hp: 1200, speed: 0.5, dmg: 35, reward: 80, skill: 'yawn', desc: '1라운드의 보스! 엄청난 체력과, 타워를 광역으로 잠재우는 하품을 씁니다.' },
     { id: 'gimmighoul', name: '모으령', spriteId: 999, hp: 2500, speed: 3.0, dmg: 0, reward: 500, skill: 'dash', desc: '코인을 사랑하는 황금 요정! 엄청난 속도로 대쉬하며, 잡으면 대박이 터집니다.' }
 ];
 
@@ -138,7 +138,7 @@ const ENEMY_TYPES_R2 = [
     { id: 'rhydon', name:'코뿌리', spriteId: 112, hp: 405, speed: 1.0, dmg: 40, reward: 50, skill: 'dash', desc: '꼬리로 빌딩도 부수는 괴력. 뿔카노보다 훨씬 묵직한 대쉬를 씁니다.' },
     { id: 'golem', name:'딱구리', spriteId: 76, hp: 315, speed: 0.8, dmg: 30, reward: 45, skill: 'explode', desc: '언제 터질지 모르는 시한폭탄! 죽으면서 엄청난 자폭 데미지를 줍니다.' },
     { id: 'klinklang', name:'기기기어르', spriteId: 601, hp: 180, speed: 1.0, dmg: 25, reward: 30, skill: 'synergy', desc: '톱니 군단의 핵심! 맵에 기어류가 많을수록 미친 듯한 속도로 달려옵니다.' },
-    { id: 'rhyperior', name:'거대코뿌리', spriteId: 464, hp: 1080, speed: 0.7, dmg: 80, reward: 150, skill: 'sandTomb', desc: '2라운드의 최종 보스. 꼬마돌을 대포처럼 쏘며, 타워들을 봉인하는 모래지옥을 씁니다.' } // 보스
+    { id: 'rhyperior', name:'거대코뿌리', spriteId: 464, hp: 1080, speed: 0.7, dmg: 55, reward: 150, skill: 'sandTomb', desc: '2라운드의 최종 보스. 꼬마돌을 대포처럼 쏘며, 타워들을 봉인하는 모래지옥을 씁니다.' } // 보스
 ];
 
 // ROUND 3 ENEMY TYPES (Beach Map)
@@ -396,7 +396,7 @@ let raidVirtualHp = 0;
 let raidVirtualMaxHp = 0;
 let clearedRaidsThisRound = [];
 const raidBossData = {
-    'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 30000, speed: 1.5, dmg: 0, reward: 0, skill: 'raidBossTypeNull', cost: 555 }
+    'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 30000, speed: 1.5, dmg: 30, reward: 0, skill: 'raidBossTypeNull', cost: 555 }
 };
 const ROUND_MAPS = {
     1: {
@@ -444,7 +444,7 @@ function startNextRound() {
     
     // Reset for new round
     wave = 1;
-    berries = 200;
+    berries = (currentRound >= 3) ? 300 : 200;
     
     waveEl.innerText = `${wave} / 20`;
     
@@ -700,12 +700,18 @@ class Enemy {
             ctx.restore();
             
             // HP bar stays completely still (no bob added)
-            ctx.fillStyle = '#000'; ctx.fillRect(this.x - 20, this.y - 30, 40, 6);
-            ctx.fillStyle = '#22c55e'; ctx.fillRect(this.x - 20, this.y - 30, 40 * Math.max(0, this.hp / this.maxHp), 6);
+            const isRaidBoss = this.baseData && this.baseData.skill === 'raidBossTypeNull';
+            const hpBarW = isRaidBoss ? 60 : 40;
+            const hpBarColor = isRaidBoss ? '#c084fc' : '#22c55e';
+            ctx.fillStyle = '#374151'; ctx.fillRect(this.x - hpBarW/2, this.y - 30, hpBarW, 6);
+            ctx.fillStyle = hpBarColor; ctx.fillRect(this.x - hpBarW/2, this.y - 30, hpBarW * Math.max(0, this.hp / this.maxHp), 6);
         } else {
             // Fallback: just draw HP bar
-            ctx.fillStyle = '#000'; ctx.fillRect(this.x - 20, this.y - 30, 40, 6);
-            ctx.fillStyle = '#22c55e'; ctx.fillRect(this.x - 20, this.y - 30, 40 * Math.max(0, this.hp / this.maxHp), 6);
+            const isRaidBoss = this.baseData && this.baseData.skill === 'raidBossTypeNull';
+            const hpBarW = isRaidBoss ? 60 : 40;
+            const hpBarColor = isRaidBoss ? '#c084fc' : '#22c55e';
+            ctx.fillStyle = '#374151'; ctx.fillRect(this.x - hpBarW/2, this.y - 30, hpBarW, 6);
+            ctx.fillStyle = hpBarColor; ctx.fillRect(this.x - hpBarW/2, this.y - 30, hpBarW * Math.max(0, this.hp / this.maxHp), 6);
         }
     }
 
@@ -1767,7 +1773,8 @@ function animate() {
         // 몬스터 수를 대폭 줄임 (20웨이브 기준 약 150마리 내외)
         const maxEnemies = wave * 4 + (wave > 3 ? Math.floor(Math.pow(wave - 3, 1.3) * 2) : 0);
 
-        if (frame % spawnRate === 0 && enemiesSpawnedThisWave < maxEnemies) {
+        // 레이드 진행 중엔 일반 적 스폰 중단
+        if (!isRaidActive && frame % spawnRate === 0 && enemiesSpawnedThisWave < maxEnemies) {
             // 10웨이브부터 5단위로 보스 출현
             const isBossWave = (wave >= 10 && wave % 5 === 0);
             const bossCount = isBossWave ? Math.floor(wave / 5) - 1 : 0; // 10웹: 1마리, 15웹: 2마리, 20웹: 3마리
@@ -1788,42 +1795,52 @@ function animate() {
             enemiesSpawnedThisWave++;
         }
 
-        let allDead = true;
+        // 레이드 중이 아닐 때만 일반 웨이브 완료 체크
+        if (!isRaidActive) {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                enemies[i].update(); enemies[i].draw();
+                if (enemies[i].hp <= 0) enemies.splice(i, 1);
+            }
+
+            if (enemies.length === 0 && enemiesSpawnedThisWave >= maxEnemies) {
+                isWaveActive = false; 
+                
+                const waveBonus = 20 + wave * 10;
+                berries += waveBonus;
+                
+                visualEffects.push(new TextEffect(canvas.width / 2 - 50, canvas.height / 2, `웨이브 보상 +${waveBonus}열매!`, '#facc15'));
+                
+                if (wave === MAX_WAVE) {
+                    if (ROUND_MAPS[currentRound + 1]) {
+                        startNextRound();
+                        requestAnimationFrame(animate);
+                        return; // Prevent wave++ and frame rendering for this cycle
+                    } else {
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
+                        ctx.fillText('STAGE CLEAR!', canvas.width/2, canvas.height/2 - 20);
+                        ctx.fillStyle = '#fff'; ctx.font = '20px Outfit';
+                        ctx.fillText('모든 라운드를 완벽하게 클리어했습니다! 🎉', canvas.width/2, canvas.height/2 + 30);
+                        return; // Stop game loop on victory
+                    }
+                }
+                
+                wave++; 
+                waveEl.innerText = wave;
+                btnStartWave.disabled = false; btnStartWave.innerText = '웨이브 시작!';
+                frame = 0;
+            }
+        }
+        frame++;
+    }
+
+    // 레이드 진행 중엔 웨이브 여부와 무관하게 레이드 보스 업데이트
+    if (isRaidActive) {
         for (let i = enemies.length - 1; i >= 0; i--) {
             enemies[i].update(); enemies[i].draw();
             if (enemies[i].hp <= 0) enemies.splice(i, 1);
-            else allDead = false;
         }
-
-        if (enemies.length === 0 && enemiesSpawnedThisWave >= maxEnemies) {
-            isWaveActive = false; 
-            
-            const waveBonus = 20 + wave * 10;
-            berries += waveBonus;
-            
-            visualEffects.push(new TextEffect(canvas.width / 2 - 50, canvas.height / 2, `웨이브 보상 +${waveBonus}열매!`, '#facc15'));
-            
-            if (wave === MAX_WAVE) {
-                if (ROUND_MAPS[currentRound + 1]) {
-                    startNextRound();
-                    requestAnimationFrame(animate);
-                    return; // Prevent wave++ and frame rendering for this cycle
-                } else {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
-                    ctx.fillText('STAGE CLEAR!', canvas.width/2, canvas.height/2 - 20);
-                    ctx.fillStyle = '#fff'; ctx.font = '20px Outfit';
-                    ctx.fillText('모든 라운드를 완벽하게 클리어했습니다! 🎉', canvas.width/2, canvas.height/2 + 30);
-                    return; // Stop game loop on victory
-                }
-            }
-            
-            wave++; 
-            waveEl.innerText = wave;
-            btnStartWave.disabled = false; btnStartWave.innerText = '웨이브 시작!';
-            frame = 0;
-        }
-        frame++;
+        frame++; // 레이드 중에도 frame 카운터 증가 (애니메이션/쿨다운 처리용)
     }
 
     for (let i = projectiles.length - 1; i >= 0; i--) {
