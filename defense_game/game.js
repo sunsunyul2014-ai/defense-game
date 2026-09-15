@@ -396,7 +396,7 @@ let raidVirtualHp = 0;
 let raidVirtualMaxHp = 0;
 let clearedRaidsThisRound = [];
 const raidBossData = {
-    'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 30000, speed: 1.5, dmg: 30, reward: 0, skill: 'raidBossTypeNull', cost: 555 }
+    'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 6000, speed: 1.5, dmg: 30, reward: 0, skill: 'raidBossTypeNull', cost: 555 }
 };
 const ROUND_MAPS = {
     1: {
@@ -487,7 +487,7 @@ canvas.addEventListener('mouseleave', () => { mouseX = -1; mouseY = -1; });
 
 // Classes
 class Enemy {
-    constructor(baseData, hpMultiplier) {
+    constructor(baseData, hpMultiplier = 1) {
         this.x = waypoints[0].x; this.y = waypoints[0].y;
         this.pathIndex = 0;
         this.baseData = baseData;
