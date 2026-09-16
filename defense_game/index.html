@@ -147,12 +147,37 @@
         </div>
     </div>
 
+    <!-- Snorlax's Shop Overlay -->
+    <div id="snorlax-shop-overlay" class="overlay" style="display: none; align-items: center; justify-content: center; z-index: 105;">
+        <div class="modal" style="width: 95%; max-width: 800px; max-height: 90vh; display: flex; flex-direction: column; border: 2px solid #0ea5e9; background: #0f172a; box-shadow: 0 0 30px rgba(14, 165, 233, 0.4); padding: 20px;">
+            <button id="btn-close-snorlax-shop" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; font-size: 1.5rem; cursor: pointer;">❌</button>
+            
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; flex-shrink: 0;">
+                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" alt="Snorlax" style="width: 100px; height: 100px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));">
+                <div style="text-align: left;">
+                    <h2 style="color: #38bdf8; margin: 0; font-size: 2rem;">잠만보의 상점</h2>
+                    <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 1rem;">라운드를 클리어하고 얻은 <b>포핀(🍡)</b>으로 영구적인 업그레이드를 하세요!</p>
+                </div>
+            </div>
+
+            <div style="text-align: right; color: #e2e8f0; font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; flex-shrink: 0;">
+                내 포핀: <span id="snorlax-poffins-display" style="color: #c084fc; font-size: 1.5rem;">0</span> 🍡
+            </div>
+
+            <!-- Upgrades Container -->
+            <div id="snorlax-upgrades-container" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; padding-right: 10px;">
+                <!-- JS로 렌더링 됨 -->
+            </div>
+        </div>
+    </div>
+
     <div id="game-container">
         <div id="ui-panel" style="max-height: calc(100vh - 60px); overflow-y: auto; padding-right: 5px;">
             <h1>Poke Defense</h1>
             <div class="stats">
                 <p>❤️ 체력: <span id="lives">500</span></p>
                 <p><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/oran-berry.png" alt="Berry" class="berry-icon"> 열매: <span id="berries">100</span></p>
+                <p>🍡 포핀: <span id="poffins" style="color: #c084fc; font-weight: bold;">0</span></p>
                 <p>🌊 웨이브: <span id="wave">1</span> / 20</p>
             </div>
 
@@ -168,8 +193,9 @@
                     <button id="btn-open-enc" style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #a78bfa; font-size: 0.9rem;">📖 도감</button>
                     <button id="btn-open-shop" style="flex: 1; background: linear-gradient(135deg, #22c55e, #16a34a); border-color: #4ade80; font-size: 0.9rem;">🏪 상점</button>
                 </div>
-                <div style="margin-top: 5px;">
-                    <button id="btn-open-raid" style="width: 100%; background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; font-size: 0.9rem; padding: 10px; font-weight: bold;">⚔️ 레이드 (2라운드부터)</button>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button id="btn-open-snorlax-shop" style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0369a1); border-color: #38bdf8; font-size: 0.9rem;">💤 잠만보 상점</button>
+                    <button id="btn-open-raid" style="flex: 1; background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; font-size: 0.9rem; font-weight: bold;">⚔️ 레이드 (2라~)</button>
                 </div>
                 <button id="btn-start-wave" style="margin-top: 5px; width: 100%;">웨이브 시작!</button>
             </div>

@@ -107,6 +107,25 @@ const POKEMON_DATA = {
     'silvally': { name: '실버디', spriteId: 773, cost: 0, range: 130, damage: 300, cooldown: 10, type: 'aoe', aoeRange: 80, color: '#d1d5db', desc: '더 강한 범위 딜 및 사거리 증가 (스턴 및 상태이상 면역)', immuneToDebuffs: true, attackStyle: 'normal' }
 };
 
+// POKEMON FAMILIES (For Snorlax's Shop Upgrades)
+const POKEMON_FAMILIES = {
+    charmander: ['charmander', 'charmeleon', 'charizard', 'mega_charizard_x', 'mega_charizard_y'],
+    squirtle: ['squirtle', 'wartortle', 'blastoise', 'mega_blastoise'],
+    bulbasaur: ['bulbasaur', 'ivysaur', 'venusaur', 'mega_venusaur'],
+    pikachu: ['pikachu', 'raichu', 'mega_raichu_x', 'mega_raichu_y'],
+    eevee: ['eevee', 'flareon', 'vaporeon', 'jolteon', 'leafeon', 'glaceon'],
+    gastly: ['gastly', 'haunter', 'gengar', 'mega_gengar'],
+    abra: ['kadabra', 'alakazam', 'mega_alakazam'],
+    magnemite: ['magnemite', 'magneton', 'magnezone'],
+    riolu: ['riolu', 'lucario', 'mega_lucario'],
+    froakie: ['froakie', 'frogadier', 'greninja'],
+    smoochum: ['smoochum', 'jynx'],
+    sigilyph: ['sigilyph'],
+    litten: ['litten', 'torracat', 'incineroar'],
+    popplio: ['popplio', 'brionne', 'primarina'],
+    rowlet: ['rowlet', 'dartrix', 'decidueye']
+};
+
 // NEW ENEMY TYPES
 const ENEMY_TYPES = [
     { id: 'caterpie', name:'캐터피', spriteId: 10, hp: 40, speed: 1.0, dmg: 2, reward: 6, desc: '새들의 맛있는 간식. 끈적거리는 실을 뱉지만 여기선 그냥 귀엽게 기어갑니다.' },
@@ -222,6 +241,7 @@ function getEnemyForWave(w, isBossSpawn) {
 // UI Elements
 const livesEl = document.getElementById('lives');
 const berriesEl = document.getElementById('berries');
+const poffinsEl = document.getElementById('poffins');
 const waveEl = document.getElementById('wave');
 const btnStartWave = document.getElementById('btn-start-wave');
 const buildMenu = document.getElementById('build-menu');
@@ -1030,8 +1050,162 @@ class Tower {
         this.item = null;
         this.immuneTimer = 0;
         this.lastTarget = null;
-        this.attackFrame = 0; // for attack recoil animation
-        this.bobOffset = Math.random() * Math.PI * 2; // for idle bob animation
+        this.attackFrame = 0;
+        this.bobOffset = Math.random() * Math.PI * 2;
+        
+        this.applyGlobalUpgrades();
+    }
+
+    applyGlobalUpgrades() {
+        if (!currentUser) return;
+        const users = loadUsers();
+        if (!users[currentUser] || !users[currentUser].upgrades) return;
+
+        const upgrades = users[currentUser].upgrades;
+        const data = POKEMON_DATA[this.baseId];
+        
+        let myFamily = null;
+        for (const [family, idArray] of Object.entries(POKEMON_FAMILIES)) {
+            if (idArray.includes(this.baseId)) {
+                myFamily = family;
+                break;
+            }
+        }
+        
+        if (!myFamily) return;
+        
+        const famUpg = upgrades[myFamily] || {};
+
+        const getR = (statKey) => (famUpg[statKey] || 0) / 10;
+        const getLv = (statKey) => (famUpg[statKey] || 0);
+
+        const dmgBoost = 1 + (currentRound - 1) * 0.2;
+        this.damage = Math.floor(data.damage * dmgBoost);
+        this.range = data.range;
+        this.cooldown = data.cooldown;
+        
+        this.globalBurnChance = 0;
+        this.globalParalyzeChance = 0;
+        this.globalFreezeChance = 0;
+        this.globalConfuseChance = 0;
+        this.globalStunChance = 0;
+        this.globalHealBlock = false;
+        this.globalAoeMult = 1;
+        this.globalProjRangeMult = 1;
+        this.globalDebuffMult = 1;
+        this.globalChainBonus = 0;
+        this.globalSpreadBonus = 0;
+        this.globalSpreadAngleMult = 1;
+        this.globalSlowFactor = 0;
+        this.immuneToAtkDown = false;
+        this.hasGlobalIntimidate = false;
+        
+        switch (myFamily) {
+            case 'charmander':
+                this.damage = Math.floor(this.damage * (1 + 0.70 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.25 * getR('range')));
+                this.globalAoeMult = 1 + 0.15 * getR('aoe');
+                this.globalBurnChance = 0.05 * getR('burn');
+                break;
+            case 'squirtle':
+                this.damage = Math.floor(this.damage * (1 + 0.50 * getR('damage')));
+                this.globalAoeMult = 1 + 0.33 * getR('aoe');
+                this.globalDebuffMult = 1 + 0.50 * getR('debuff');
+                if (data.cooldown > 30) {
+                    this.cooldown = Math.floor(data.cooldown - (data.cooldown - 30) * getR('speed'));
+                }
+                break;
+            case 'bulbasaur':
+                this.damage = Math.floor(this.damage * (1 + 0.50 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.20 * getR('range')));
+                this.globalAoeMult = 1 + 0.50 * getR('aoe');
+                this.globalHealBlock = (getLv('util') > 0);
+                break;
+            case 'pikachu':
+                this.damage = Math.floor(this.damage * (1 + 0.45 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.20 * getR('range')));
+                this.globalChainBonus = Math.floor(2 * getR('chain'));
+                this.globalParalyzeChance = 0.05 * getR('paralyze');
+                this.globalConfuseChance = 0.10 * getR('confuse');
+                break;
+            case 'eevee':
+                this.damage = Math.floor(this.damage * (1 + 0.55 * getR('damage')));
+                const effR = getR('effect');
+                if (this.baseId === 'flareon') this.globalBurnChance = 0.10 * effR;
+                if (this.baseId === 'vaporeon') this.globalAoeMult = 1 + 0.80 * effR;
+                if (this.baseId === 'jolteon') {
+                    if (data.cooldown > 6) {
+                        this.cooldown = Math.floor(data.cooldown - (data.cooldown - 6) * effR);
+                    }
+                }
+                if (this.baseId === 'leafeon') this.damage = Math.floor(this.damage * (1 + 0.25 * effR));
+                if (this.baseId === 'glaceon') this.globalChainBonus = Math.floor(3 * effR);
+                break;
+            case 'gastly':
+                this.damage = Math.floor(this.damage * (1 + 0.33 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.05 * getR('range')));
+                this.globalAoeMult = 1 + 0.20 * getR('aoe');
+                this.globalDebuffMult = 1 + 0.15 * getR('debuff');
+                this.globalHealBlock = (getLv('util') > 0);
+                break;
+            case 'abra':
+                this.damage = Math.floor(this.damage * (1 + 0.40 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.15 * getR('range')));
+                this.globalAoeMult = 1 + 0.10 * getR('aoe');
+                this.globalParalyzeChance = 0.10 * getR('paralyze');
+                if (this.baseId === 'mega_alakazam') this.globalParalyzeChance += 0.05 * getR('paralyze');
+                break;
+            case 'magnemite':
+                this.damage = Math.floor(this.damage * (1 + 0.45 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.20 * getR('range')));
+                this.globalAoeMult = 1 + 0.35 * getR('aoe');
+                this.globalParalyzeChance = 0.05 * getR('paralyze');
+                this.globalStunChance = 0.05 * getR('stun');
+                break;
+            case 'riolu':
+                this.damage = Math.floor(this.damage * (1 + 0.50 * getR('damage')));
+                this.cooldown = Math.floor(data.cooldown * (1 - 0.18 * getR('speed')));
+                this.globalAoeMult = 1 + 0.20 * getR('aoe');
+                this.hasGlobalIntimidate = (getLv('util') > 0);
+                break;
+            case 'froakie':
+                this.range = Math.floor(this.range * (1 + 0.35 * getR('range')));
+                const targetCd = (this.baseId === 'greninja') ? 6 : 12;
+                if (data.cooldown > targetCd) {
+                    this.cooldown = Math.floor(data.cooldown - (data.cooldown - targetCd) * getR('speed'));
+                }
+                this.immuneToAtkDown = (getLv('util') > 0);
+                break;
+            case 'smoochum':
+                this.damage = Math.floor(this.damage * (1 + 0.25 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.15 * getR('range')));
+                this.globalAoeMult = 1 + 0.10 * getR('aoe');
+                this.globalFreezeChance = 0.05 * getR('freeze');
+                break;
+            case 'sigilyph':
+                this.damage = Math.floor(this.damage * (1 + 0.25 * getR('damage')));
+                break;
+            case 'litten':
+                this.damage = Math.floor(this.damage * (1 + 0.50 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.15 * getR('range')));
+                this.globalBurnChance = 0.10 * getR('burn');
+                if (this.baseId === 'incineroar') {
+                    this.globalAoeMult = 1 + 0.50 * getR('aoe');
+                }
+                break;
+            case 'popplio':
+                this.range = Math.floor(this.range * (1 + 0.20 * getR('range')));
+                this.globalAoeMult = 1 + 0.33 * getR('aoe');
+                this.globalDebuffMult = 1 + 0.10 * getR('debuff');
+                this.globalSlowFactor = 0.5 * getR('slow');
+                break;
+            case 'rowlet':
+                this.range = Math.floor(this.range * (1 + 0.22 * getR('range')));
+                this.globalSpreadBonus = Math.floor(2 * getR('spread'));
+                this.globalProjRangeMult = 1 + 0.15 * getR('proj');
+                this.globalSpreadAngleMult = 1 - 0.50 * getR('narrow');
+                break;
+        }
     }
 
     draw() {
@@ -1320,9 +1494,9 @@ class Tower {
                         }
                     } else if (data.type === 'spread') {
                         this.attackFrame = 8;
-                        let spreadCount = data.spreadCount || 5;
+                        let spreadCount = (data.spreadCount || 5) + (this.globalSpreadBonus || 0);
                         let baseAngle = Math.atan2(bestEnemy.y - this.y, bestEnemy.x - this.x);
-                        let spreadAngle = Math.PI / 4;
+                        let spreadAngle = (Math.PI / 4) * (this.globalSpreadAngleMult || 1);
                         let startAngle = baseAngle - spreadAngle / 2;
                         let angleStep = spreadCount > 1 ? spreadAngle / (spreadCount - 1) : 0;
                         for (let i = 0; i < spreadCount; i++) {
@@ -1465,24 +1639,49 @@ class Projectile {
         
         if (enemy.baseData.immuneToDebuffs) return;
         
-        if (this.data.burnChance && Math.random() < this.data.burnChance) enemy.status.burnTimer = 300;
-        if (this.data.poisonChance && Math.random() < this.data.poisonChance) enemy.status.poisonTimer = 300;
-        if (this.data.confuseChance && Math.random() < this.data.confuseChance) {
+        let burnChance = (this.data.burnChance || 0) + (this.sourceTower.globalBurnChance || 0);
+        let poisonChance = (this.data.poisonChance || 0);
+        let confuseChance = (this.data.confuseChance || 0) + (this.sourceTower.globalConfuseChance || 0);
+        let freezeChance = (this.data.freezeChance || 0) + (this.sourceTower.globalFreezeChance || 0);
+        let paralyzeChance = (this.data.paralyzeChance || 0) + (this.sourceTower.globalParalyzeChance || 0);
+        let stunChance = this.sourceTower.globalStunChance || 0;
+        let debuffMult = this.sourceTower.globalDebuffMult || 1;
+        
+        if (burnChance && Math.random() < burnChance) enemy.status.burnTimer = 300;
+        if (poisonChance && Math.random() < poisonChance) enemy.status.poisonTimer = 300;
+        if (confuseChance && Math.random() < confuseChance) {
             enemy.status.confused = true; enemy.status.confuseTimer = 300; enemy.status.confuseTick = 0;
         }
-        if (this.data.freezeChance && Math.random() < this.data.freezeChance) {
+        if (freezeChance && Math.random() < freezeChance) {
             enemy.status.frozen = true; enemy.status.freezeTick = 0;
         }
+        
         if (enemy.baseData.id !== 'snorlax') {
             if (this.data.stunDur) enemy.status.stunTimer = this.data.stunDur;
-            if (this.data.paralyzeChance && Math.random() < this.data.paralyzeChance) enemy.status.paralyzed = true;
+            else if (stunChance && Math.random() < stunChance) enemy.status.stunTimer = 60;
+            if (paralyzeChance && Math.random() < paralyzeChance) enemy.status.paralyzed = true;
         }
+        
         if (this.data.defDownFactor) {
-            enemy.status.defDownFactor = this.data.defDownFactor; enemy.status.defDownTimer = this.data.debuffDur;
+            enemy.status.defDownFactor = this.data.defDownFactor * debuffMult; enemy.status.defDownTimer = this.data.debuffDur;
             enemy.status.atkDownFactor = this.data.atkDownFactor || 1; enemy.status.atkDownTimer = this.data.debuffDur;
-            if (this.data.slowFactor) { enemy.status.slowFactor = this.data.slowFactor; enemy.status.slowTimer = this.data.debuffDur; }
         }
+
+        let slowFactor = this.data.slowFactor || 0;
+        if (this.sourceTower.globalSlowFactor) {
+            // 기존 둔화가 없어도 새로 추가될 수 있음. 강도는 예: 0.5 (50% 속도)
+            slowFactor = slowFactor ? Math.min(slowFactor, 1 - this.sourceTower.globalSlowFactor) : (1 - this.sourceTower.globalSlowFactor);
+        }
+        if (slowFactor && slowFactor > 0) {
+            enemy.status.slowFactor = slowFactor;
+            enemy.status.slowTimer = this.data.debuffDur || 120;
+        }
+
         if (this.data.knockbackChance && Math.random() < this.data.knockbackChance) enemy.applyKnockback(40);
+        
+        if (this.sourceTower.globalHealBlock) {
+            enemy.status.healBlockTimer = 300;
+        }
     }
 
     update() {
@@ -1536,14 +1735,15 @@ class Projectile {
             this.applyEffects(this.target);
 
             if (this.data.type === 'aoe') {
-                visualEffects.push(new ExplosionEffect(this.target.x, this.target.y, this.data.aoeRange, this.data.color));
-                let aoeRangeSq = this.data.aoeRange * this.data.aoeRange;
+                let currentAoeRange = this.data.aoeRange * (this.sourceTower.globalAoeMult || 1);
+                visualEffects.push(new ExplosionEffect(this.target.x, this.target.y, currentAoeRange, this.data.color));
+                let aoeRangeSq = currentAoeRange * currentAoeRange;
                 for (let e of enemies) {
                     if (e !== this.target) {
                         let edx = e.x - this.target.x;
-                        if (edx > this.data.aoeRange || edx < -this.data.aoeRange) continue;
+                        if (edx > currentAoeRange || edx < -currentAoeRange) continue;
                         let edy = e.y - this.target.y;
-                        if (edy > this.data.aoeRange || edy < -this.data.aoeRange) continue;
+                        if (edy > currentAoeRange || edy < -currentAoeRange) continue;
                         if (edx*edx + edy*edy <= aoeRangeSq) {
                             let oldDamage = this.damage;
                             this.damage *= 0.5;
@@ -1553,7 +1753,7 @@ class Projectile {
                     }
                 }
                 this.active = false;
-            } else if (this.data.type === 'chain' && this.chainCount < (this.data.chainMax - 1)) {
+            } else if (this.data.type === 'chain' && this.chainCount < (this.data.chainMax - 1 + (this.sourceTower.globalChainBonus || 0))) {
                 this.chainCount++;
                 let nextTarget = enemies.find(e => {
                     if (this.hitTargets.has(e)) return false;
@@ -1863,10 +2063,26 @@ function animate() {
                 
                 if (wave === MAX_WAVE) {
                     if (ROUND_MAPS[currentRound + 1]) {
+                        // 라운드 클리어 보상 (포핀)
+                        if (currentUser) {
+                            const users = loadUsers();
+                            if (users[currentUser]) {
+                                const poffinsEarned = currentRound * 10;
+                                users[currentUser].poffins += poffinsEarned;
+                                saveUsers(users);
+                                visualEffects.push(new TextEffect(canvas.width / 2, canvas.height / 2 - 40, `라운드 보상 +${poffinsEarned} 🍡!`, '#c084fc'));
+                                updatePoffinUI();
+                            }
+                        }
+
                         startNextRound();
                         requestAnimationFrame(animate);
                         return; // Prevent wave++ and frame rendering for this cycle
                     } else {
+                        if (currentUser) {
+                            const users = loadUsers();
+                            if (users[currentUser]) saveUsers(users);
+                        }
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                         ctx.fillStyle = '#fcd34d'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
                         ctx.fillText('STAGE CLEAR!', canvas.width/2, canvas.height/2 - 20);
@@ -1908,6 +2124,10 @@ function animate() {
     }
     
     if (lives <= 0) {
+        if (currentUser) {
+            const users = loadUsers();
+            if (users[currentUser]) saveUsers(users);
+        }
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#ef4444'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
         ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 20);
@@ -2131,6 +2351,196 @@ const btnOpenShop = document.getElementById('btn-open-shop');
 const btnCloseShop = document.getElementById('btn-close-shop');
 const shopItemsContainer = document.getElementById('shop-items-container');
 const shopBerriesDisplay = document.getElementById('shop-berries-display');
+
+// Snorlax Shop UI
+const snorlaxShopOverlay = document.getElementById('snorlax-shop-overlay');
+const btnOpenSnorlaxShop = document.getElementById('btn-open-snorlax-shop');
+const btnCloseSnorlaxShop = document.getElementById('btn-close-snorlax-shop');
+const snorlaxUpgradesContainer = document.getElementById('snorlax-upgrades-container');
+const snorlaxPoffinsDisplay = document.getElementById('snorlax-poffins-display');
+
+btnOpenSnorlaxShop.addEventListener('click', () => {
+    snorlaxShopOverlay.style.display = 'flex';
+    renderSnorlaxShop();
+});
+btnCloseSnorlaxShop.addEventListener('click', () => {
+    snorlaxShopOverlay.style.display = 'none';
+});
+
+const UPGRADE_DATA = {
+    charmander: { title: '파이리류', sprite: 4, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '범위', max: 10 }, burn: { name: '화상 확률', max: 10 } } },
+    squirtle: { title: '꼬부기류', sprite: 7, stats: { damage: { name: '공격력', max: 10 }, aoe: { name: '범위', max: 10 }, debuff: { name: '슬로우 강도', max: 10 }, speed: { name: '공격속도', max: 10 } } },
+    bulbasaur: { title: '이상해씨류', sprite: 1, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '범위', max: 10 }, util: { name: '회복봉인', max: 1 } } },
+    pikachu: { title: '피카츄류', sprite: 25, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, chain: { name: '체인 +1마리', max: 10 }, paralyze: { name: '마비 확률', max: 10 }, confuse: { name: '혼란 확률', max: 10 } } },
+    eevee: { title: '이브이류', sprite: 133, stats: { damage: { name: '공격력', max: 10 }, effect: { name: '특수효과', max: 10 } } },
+    gastly: { title: '고오스류', sprite: 92, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '범위', max: 10 }, debuff: { name: '디버프 강도', max: 10 }, util: { name: '회복봉인', max: 1 } } },
+    abra: { title: '윤겔라류', sprite: 64, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '범위', max: 10 }, paralyze: { name: '마비 확률', max: 10 } } },
+    magnemite: { title: '코일류', sprite: 81, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '레이저 폭', max: 10 }, paralyze: { name: '마비 확률', max: 10 }, stun: { name: '스턴 확률', max: 10 } } },
+    riolu: { title: '리오르류', sprite: 447, stats: { damage: { name: '공격력', max: 10 }, speed: { name: '공격속도', max: 10 }, aoe: { name: '범위', max: 10 }, util: { name: '위협 특성', max: 1 } } },
+    froakie: { title: '개구마르류', sprite: 656, stats: { range: { name: '사거리', max: 10 }, speed: { name: '공격속도', max: 10 }, util: { name: '공깎 무효', max: 1 } } },
+    smoochum: { title: '뽀뽀라류', sprite: 238, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '범위', max: 10 }, freeze: { name: '빙결 확률', max: 10 } } },
+    sigilyph: { title: '심보러', sprite: 561, stats: { damage: { name: '공격력', max: 10 } } },
+    litten: { title: '냐오불류', sprite: 725, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '위협 범위', max: 10 }, burn: { name: '화상 확률', max: 10 } } },
+    popplio: { title: '누리공류', sprite: 728, stats: { range: { name: '사거리', max: 10 }, aoe: { name: '범위', max: 10 }, debuff: { name: '디버프 강도', max: 10 }, slow: { name: '둔화 강도', max: 10 } } },
+    rowlet: { title: '나몰빼미류', sprite: 722, stats: { range: { name: '사거리', max: 10 }, spread: { name: '깃털 개수', max: 10 }, proj: { name: '투사체 사거리', max: 10 }, narrow: { name: '각도 감소', max: 10 } } }
+};
+
+let selectedSnorlaxFamily = 'charmander';
+
+function renderSnorlaxShop() {
+    snorlaxUpgradesContainer.innerHTML = '';
+    snorlaxUpgradesContainer.style.display = 'flex';
+    snorlaxUpgradesContainer.style.flexDirection = 'row';
+    snorlaxUpgradesContainer.style.gap = '20px';
+    snorlaxUpgradesContainer.style.height = '450px';
+
+    if (!currentUser) return;
+    const users = loadUsers();
+    
+    // Migration Logic (숫자 -> 객체 변환)
+    let needsSave = false;
+    for (const fam of Object.keys(UPGRADE_DATA)) {
+        if (!users[currentUser].upgrades[fam]) {
+            users[currentUser].upgrades[fam] = {};
+            needsSave = true;
+        } else if (typeof users[currentUser].upgrades[fam] === 'number') {
+            let oldLevel = users[currentUser].upgrades[fam];
+            users[currentUser].upgrades[fam] = {};
+            for (const statKey in UPGRADE_DATA[fam].stats) {
+                users[currentUser].upgrades[fam][statKey] = oldLevel;
+            }
+            needsSave = true;
+        }
+    }
+    if (needsSave) saveUsers(users);
+    
+    const upgrades = users[currentUser].upgrades;
+    const currentPoffins = users[currentUser].poffins;
+
+    // Left Panel: Family List
+    const listPanel = document.createElement('div');
+    listPanel.style.width = '200px';
+    listPanel.style.display = 'flex';
+    listPanel.style.flexDirection = 'column';
+    listPanel.style.gap = '5px';
+    listPanel.style.overflowY = 'auto';
+    listPanel.style.borderRight = '1px solid #334155';
+    listPanel.style.paddingRight = '10px';
+
+    for (const [family, data] of Object.entries(UPGRADE_DATA)) {
+        const btn = document.createElement('button');
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.gap = '10px';
+        btn.style.padding = '10px';
+        btn.style.background = (selectedSnorlaxFamily === family) ? '#0ea5e9' : '#1e293b';
+        btn.style.border = '1px solid #334155';
+        btn.style.color = 'white';
+        btn.style.borderRadius = '8px';
+        btn.style.cursor = 'pointer';
+        
+        btn.innerHTML = `
+            <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${data.sprite}.png" style="width: 40px; height: 40px; background: rgba(0,0,0,0.2); border-radius: 4px; object-fit: contain;">
+            <span style="font-weight: bold;">${data.title}</span>
+        `;
+        btn.onclick = () => {
+            selectedSnorlaxFamily = family;
+            renderSnorlaxShop();
+        };
+        listPanel.appendChild(btn);
+    }
+
+    // Right Panel: Detail Stats
+    const detailPanel = document.createElement('div');
+    detailPanel.style.flex = '1';
+    detailPanel.style.display = 'flex';
+    detailPanel.style.flexDirection = 'column';
+    detailPanel.style.gap = '10px';
+    detailPanel.style.overflowY = 'auto';
+    detailPanel.style.paddingLeft = '10px';
+
+    const selData = UPGRADE_DATA[selectedSnorlaxFamily];
+    const familyUpgrades = upgrades[selectedSnorlaxFamily] || {};
+
+    const titleEl = document.createElement('h2');
+    titleEl.style.margin = '0 0 10px 0';
+    titleEl.style.color = '#38bdf8';
+    titleEl.innerText = `${selData.title} 능력치 강화`;
+    detailPanel.appendChild(titleEl);
+
+    for (const [statKey, statInfo] of Object.entries(selData.stats)) {
+        const lv = familyUpgrades[statKey] || 0;
+        const maxLv = statInfo.max;
+        const cost = lv * 10 + 10;
+        
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.background = '#1e293b';
+        row.style.padding = '15px';
+        row.style.borderRadius = '8px';
+        row.style.border = '1px solid #334155';
+
+        row.innerHTML = `
+            <div>
+                <div style="font-size: 1.1rem; font-weight: bold; color: #f8fafc; margin-bottom: 5px;">${statInfo.name} <span style="color: #fbbf24;">(Lv.${lv}/${maxLv})</span></div>
+            </div>
+        `;
+        
+        const btn = document.createElement('button');
+        btn.style.padding = '8px 15px';
+        if (lv >= maxLv) {
+            btn.innerText = '최대 레벨';
+            btn.style.background = '#475569';
+            btn.style.color = '#94a3b8';
+            btn.style.cursor = 'not-allowed';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '4px';
+        } else {
+            btn.innerText = \`강화 (\${cost} 🍡)\`;
+            btn.style.background = (currentPoffins >= cost) ? '#10b981' : '#475569';
+            btn.style.color = 'white';
+            btn.style.cursor = (currentPoffins >= cost) ? 'pointer' : 'not-allowed';
+            btn.style.border = 'none';
+            btn.style.borderRadius = '4px';
+            btn.style.fontWeight = 'bold';
+            if (currentPoffins >= cost) {
+                btn.onclick = () => {
+                    buySnorlaxUpgrade(selectedSnorlaxFamily, statKey, cost);
+                };
+            }
+        }
+        row.appendChild(btn);
+        detailPanel.appendChild(row);
+    }
+
+    snorlaxUpgradesContainer.appendChild(listPanel);
+    snorlaxUpgradesContainer.appendChild(detailPanel);
+}
+
+function buySnorlaxUpgrade(family, statKey, cost) {
+    if (!currentUser) return;
+    const users = loadUsers();
+    if (users[currentUser].poffins >= cost) {
+        users[currentUser].poffins -= cost;
+        if (!users[currentUser].upgrades[family]) users[currentUser].upgrades[family] = {};
+        users[currentUser].upgrades[family][statKey] = (users[currentUser].upgrades[family][statKey] || 0) + 1;
+        saveUsers(users);
+        updatePoffinUI();
+        renderSnorlaxShop();
+        
+        // 기존 맵에 있는 해당 계열 타워들도 즉시 능력치 재계산
+        const familyKeys = POKEMON_FAMILIES[family] || [];
+        for (const tower of towers) {
+            if (familyKeys.includes(tower.baseId)) {
+                if (typeof tower.applyGlobalUpgrades === 'function') {
+                    tower.applyGlobalUpgrades();
+                }
+            }
+        }
+    }
+}
 
 const SHOP_ITEM_POOL = [
     { id: 'fire_stone', name: '불꽃의 돌', desc: '특정 포켓몬 진화에 사용', price: 150, icon: '🔥' },
@@ -2502,12 +2912,28 @@ function loadUsers() {
     return JSON.parse(localStorage.getItem('pokemon_defense_users')) || {};
 }
 
+function updatePoffinUI() {
+    if (!currentUser) return;
+    const users = loadUsers();
+    const user = users[currentUser];
+    if (user && poffinsEl) {
+        poffinsEl.innerText = user.poffins;
+        snorlaxPoffinsDisplay.innerText = user.poffins;
+    }
+}
+
 function saveUsers(users) {
     localStorage.setItem('pokemon_defense_users', JSON.stringify(users));
 }
 
 if (btnLogin) {
-    btnLogin.addEventListener('click', () => {
+    const initialUpgrades = {
+        charmander: 0, squirtle: 0, bulbasaur: 0, pikachu: 0, eevee: 0,
+        gastly: 0, abra: 0, magnemite: 0, riolu: 0, froakie: 0,
+        smoochum: 0, sigilyph: 0, litten: 0, popplio: 0, rowlet: 0
+    };
+
+    const handleLogin = () => {
         const id = loginId.value.trim();
         const pw = loginPw.value;
         if (!id || !pw) {
@@ -2518,20 +2944,24 @@ if (btnLogin) {
         const users = loadUsers();
         if (users[id]) {
             if (users[id].password === pw) {
+                // 기존 유저 데이터 호환성 패치
+                if (users[id].poffins === undefined) users[id].poffins = 0;
+                if (!users[id].upgrades) users[id].upgrades = { ...initialUpgrades };
+                saveUsers(users); // 변경된 구조 저장
+
                 // 로그인 성공
                 currentUser = id;
                 loginOverlay.style.display = 'none';
                 userStatusBar.style.display = 'flex';
                 userNameDisplay.innerText = currentUser;
+                updatePoffinUI(); // 포핀 UI 업데이트
                 
                 if (users[id].hasSeenTutorial) {
-                    // 세이브 데이터가 있으면 불러오기
                     if (users[id].saveData) {
                         loadGame(users[id].saveData);
                     }
                     animate();
                 } else {
-                    // 첫 로그인이나 튜토리얼을 안 본 경우
                     tutOverlay.style.display = 'flex';
                 }
             } else {
@@ -2542,17 +2972,29 @@ if (btnLogin) {
             users[id] = {
                 password: pw,
                 hasSeenTutorial: false,
-                saveData: null
+                saveData: null,
+                poffins: 0,
+                upgrades: { ...initialUpgrades }
             };
             saveUsers(users);
             currentUser = id;
             loginOverlay.style.display = 'none';
             userStatusBar.style.display = 'flex';
             userNameDisplay.innerText = currentUser;
+            updatePoffinUI(); // 포핀 UI 업데이트
             
-            // 신규 가입이므로 튜토리얼 물어보기
             tutOverlay.style.display = 'flex';
         }
+    };
+
+    btnLogin.addEventListener('click', handleLogin);
+    
+    // 엔터키 지원 추가
+    loginId.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginPw.focus();
+    });
+    loginPw.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleLogin();
     });
 }
 
