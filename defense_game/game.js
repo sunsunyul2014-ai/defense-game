@@ -2070,7 +2070,7 @@ function animate() {
                                 const poffinsEarned = currentRound * 10;
                                 users[currentUser].poffins += poffinsEarned;
                                 saveUsers(users);
-                                visualEffects.push(new TextEffect(canvas.width / 2, canvas.height / 2 - 40, `라운드 보상 +${poffinsEarned} 🍡!`, '#c084fc'));
+                                visualEffects.push(new TextEffect(canvas.width / 2, canvas.height / 2 - 40, `라운드 보상 +${poffinsEarned} 포핀!`, '#c084fc'));
                                 updatePoffinUI();
                             }
                         }
@@ -2498,7 +2498,7 @@ function renderSnorlaxShop() {
             btn.style.border = 'none';
             btn.style.borderRadius = '4px';
         } else {
-            btn.innerText = `강화 (${cost} 🍡)`;
+            btn.innerHTML = `강화 (${cost} <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/lumiose-galette.png" style="width: 16px; vertical-align: middle;">)`;
             btn.style.background = (currentPoffins >= cost) ? '#10b981' : '#475569';
             btn.style.color = 'white';
             btn.style.cursor = (currentPoffins >= cost) ? 'pointer' : 'not-allowed';
