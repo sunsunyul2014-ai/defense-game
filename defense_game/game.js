@@ -997,6 +997,12 @@ class Enemy {
     }
 }
 
+// Tower draw 애니메이션 타입 분류 (매 프레임 생성 방지용 상수)
+const TOWER_ANIM_ENERGETIC = new Set(['charmander','charmeleon','charizard','pikachu','raichu','mega_charizard_x','mega_charizard_y','zapdos','magneton','mega_raichu_x','mega_raichu_y']);
+const TOWER_ANIM_FLUID     = new Set(['squirtle','wartortle','blastoise','vaporeon','articuno','lapras','gyarados','mega_blastoise','mega_lucario']);
+const TOWER_ANIM_FLOATING  = new Set(['sigilyph','mewtwo','alakazam','gengar','haunter','gastly','mega_alakazam','mega_gengar']);
+const TOWER_ANIM_SWAYING   = new Set(['bulbasaur','ivysaur','venusaur','oddish','vileplume','exeggutor','mega_venusaur']);
+
 class Tower {
     constructor(gridX, gridY, baseId) {
         this.gridX = gridX; this.gridY = gridY;
@@ -1046,29 +1052,24 @@ class Tower {
 
         if (img.complete && img.naturalWidth > 0) {
             const id = data.id || this.baseId;
-            const energetic = ['charmander', 'charmeleon', 'charizard', 'pikachu', 'raichu', 'mega_charizard_x', 'mega_charizard_y', 'zapdos', 'magneton', 'mega_raichu_x', 'mega_raichu_y'];
-            const fluid = ['squirtle', 'wartortle', 'blastoise', 'vaporeon', 'articuno', 'lapras', 'gyarados', 'mega_blastoise', 'mega_lucario'];
-            const floating = ['sigilyph', 'mewtwo', 'alakazam', 'gengar', 'haunter', 'gastly', 'mega_alakazam', 'mega_gengar'];
-            const swaying = ['bulbasaur', 'ivysaur', 'venusaur', 'oddish', 'vileplume', 'exeggutor', 'mega_venusaur'];
 
             let idleTime = frame * 0.05 + this.bobOffset;
             let idleSquash = 1, idleStretch = 1, idleBob = 0, idleRot = 0;
 
-            if (energetic.includes(id)) {
-                idleTime *= 1.5; // faster breathing
+            if (TOWER_ANIM_ENERGETIC.has(id)) {
+                idleTime *= 1.5;
                 idleSquash = 1 + Math.sin(idleTime) * 0.04;
                 idleStretch = 1 - Math.sin(idleTime) * 0.04;
-            } else if (fluid.includes(id)) {
+            } else if (TOWER_ANIM_FLUID.has(id)) {
                 idleSquash = 1 + Math.sin(idleTime) * 0.02;
-                idleStretch = 1 + Math.cos(idleTime) * 0.02; // slightly wobbly
+                idleStretch = 1 + Math.cos(idleTime) * 0.02;
                 idleBob = Math.sin(idleTime) * 3;
-            } else if (floating.includes(id)) {
-                idleBob = Math.sin(idleTime * 0.8) * -8 - 5; // floats in the air
+            } else if (TOWER_ANIM_FLOATING.has(id)) {
+                idleBob = Math.sin(idleTime * 0.8) * -8 - 5;
                 idleRot = Math.sin(idleTime * 0.4) * 0.05;
-            } else if (swaying.includes(id)) {
-                idleRot = Math.sin(idleTime * 0.6) * 0.1; // gently sways left/right
+            } else if (TOWER_ANIM_SWAYING.has(id)) {
+                idleRot = Math.sin(idleTime * 0.6) * 0.1;
             } else {
-                // Default breathing
                 idleSquash = 1 + Math.sin(idleTime) * 0.03;
                 idleStretch = 1 - Math.sin(idleTime) * 0.03;
                 idleBob = Math.sin(idleTime * 2) * 2;
@@ -1078,16 +1079,15 @@ class Tower {
             let atkPop = 0, atkRot = 0, atkScale = 1;
             
             if (this.attackFrame > 0) {
-                const prog = (8 - this.attackFrame) / 8; // 0 to 1
-                
-                if (energetic.includes(id)) {
-                    atkPop = Math.sin(prog * Math.PI) * -15; // aggressive jump
+                const prog = (8 - this.attackFrame) / 8;
+                if (TOWER_ANIM_ENERGETIC.has(id)) {
+                    atkPop = Math.sin(prog * Math.PI) * -15;
                     atkScale = 1 + Math.sin(prog * Math.PI) * 0.2;
-                } else if (fluid.includes(id)) {
-                    atkPop = Math.sin(prog * Math.PI) * -6; // smooth jump
-                    atkScale = 1 - Math.sin(prog * Math.PI) * 0.1; // squishes inward
-                } else if (swaying.includes(id)) {
-                    atkRot = Math.sin(prog * Math.PI) * 0.3 * (this.gridX % 2 === 0 ? 1 : -1); // heavy sway recoil
+                } else if (TOWER_ANIM_FLUID.has(id)) {
+                    atkPop = Math.sin(prog * Math.PI) * -6;
+                    atkScale = 1 - Math.sin(prog * Math.PI) * 0.1;
+                } else if (TOWER_ANIM_SWAYING.has(id)) {
+                    atkRot = Math.sin(prog * Math.PI) * 0.3 * (this.gridX % 2 === 0 ? 1 : -1);
                 } else {
                     atkPop = Math.sin(prog * Math.PI) * -12;
                     atkRot = Math.sin(prog * Math.PI) * 0.2 * (this.gridX % 2 === 0 ? 1 : -1);
@@ -1202,7 +1202,7 @@ class Tower {
                         e.status.confuseTick = 0;
                     }
                     hitAny = true;
-                    visualEffects.push(new BubbleEffect(e.x, e.y, data.color, 15));
+                    if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(e.x, e.y, data.color, 15));
                 }
                 if (hitAny) { this.timer = this.cooldown; this.attackFrame = 8; }
                 
@@ -1222,7 +1222,7 @@ class Tower {
                         e.status.slowTimer = data.slowDur;
                         if (data.paralyzeChance && Math.random() < data.paralyzeChance) e.status.paralyzed = true;
                         hitAny = true;
-                        visualEffects.push(new BubbleEffect(e.x, e.y, data.color, 20));
+                        if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(e.x, e.y, data.color, 20));
                     }
                 }
                 if (hitAny) { this.timer = this.cooldown; this.attackFrame = 8; }
@@ -1295,7 +1295,7 @@ class Tower {
 
                     if (data.type === 'laser') {
                         // 레이저 즉발 충돌 판정
-                        this.attackFrame = 8; // trigger recoil
+                        this.attackFrame = 8;
                         let dx = bestEnemy.x - this.x;
                         let dy = bestEnemy.y - this.y;
                         let length = Math.hypot(dx, dy);
@@ -1303,23 +1303,15 @@ class Tower {
                         let dirY = dy / length;
                         let laserEndX = this.x + dirX * 1000;
                         let laserEndY = this.y + dirY * 1000;
-                        
-                        visualEffects.push(new LaserEffect(this.x, this.y, laserEndX, laserEndY, data.color, data.laserWidth));
-                        
-                        // 선분과의 거리 계산을 통한 충돌 판정
+                        if (visualEffects.length < 200) visualEffects.push(new LaserEffect(this.x, this.y, laserEndX, laserEndY, data.color, data.laserWidth));
                         for (let e of enemies) {
-                            // Point to line segment distance
-                            let px = e.x - this.x;
-                            let py = e.y - this.y;
+                            let px = e.x - this.x; let py = e.y - this.y;
                             let proj = px * dirX + py * dirY;
                             if (proj > 0 && proj < 1000) {
-                                let closestX = this.x + proj * dirX;
-                                let closestY = this.y + proj * dirY;
-                                let cx = e.x - closestX;
-                                if (cx > 30 || cx < -30) continue;
-                                let cy = e.y - closestY;
-                                if (cy > 30 || cy < -30) continue;
-                                if (cx*cx + cy*cy < 900) { // 30*30
+                                let closestX = this.x + proj * dirX; let closestY = this.y + proj * dirY;
+                                let cx = e.x - closestX; if (cx > 30 || cx < -30) continue;
+                                let cy = e.y - closestY; if (cy > 30 || cy < -30) continue;
+                                if (cx*cx + cy*cy < 900) {
                                     e.applyDamage(this.damage * damageMult, data.ignoreDef, false, this);
                                     if (data.paralyzeChance && Math.random() < data.paralyzeChance) e.status.paralyzed = true;
                                     if (data.stunDur) e.status.stunTimer = data.stunDur;
@@ -1327,74 +1319,42 @@ class Tower {
                             }
                         }
                     } else if (data.type === 'spread') {
-                        this.attackFrame = 8; // trigger recoil
+                        this.attackFrame = 8;
                         let spreadCount = data.spreadCount || 5;
                         let baseAngle = Math.atan2(bestEnemy.y - this.y, bestEnemy.x - this.x);
-                        let spreadAngle = Math.PI / 4; // 45 degrees spread
+                        let spreadAngle = Math.PI / 4;
                         let startAngle = baseAngle - spreadAngle / 2;
                         let angleStep = spreadCount > 1 ? spreadAngle / (spreadCount - 1) : 0;
-                        
                         for (let i = 0; i < spreadCount; i++) {
                             let angle = startAngle + i * angleStep;
                             projectiles.push(new Projectile(this.x, this.y, null, this, damageMult, angle, spreadCount));
                         }
+                    } else if (data.type === 'aoe' && data.aoeRange) {
+                        // AOE: 프로젝타일 발사 후 도착 시 폭발
+                        this.attackFrame = 8;
+                        projectiles.push(new Projectile(this.x, this.y, bestEnemy, this, damageMult));
+                    } else if (data.type === 'chain') {
+                        // Chain: 프로젝타일 발사
+                        this.attackFrame = 8;
+                        projectiles.push(new Projectile(this.x, this.y, bestEnemy, this, damageMult));
                     } else {
-                        this.attackFrame = 8; // trigger recoil
-                        let enemy = bestEnemy;
-                        let baseDmg = this.damage * damageMult;
-                        if (this.data && this.data.bonusDamageToParalyzed && (enemy.status.paralyzed || enemy.status.stunTimer > 0)) baseDmg *= this.data.bonusDamageToParalyzed;
-                        
-                        if (data.type === 'aoe' && data.aoeRange) {
-                            // 광역 공격: 폭발 이펙트 + aoeRange 내 모든 적에게 피해
-                            visualEffects.push(new ExplosionEffect(enemy.x, enemy.y, data.aoeRange, data.color));
-                            enemy.applyDamage(baseDmg, data.ignoreDef, false, this);
-                            let aoeRangeSq = data.aoeRange * data.aoeRange;
-                            for (let e of enemies) {
-                                if (e === enemy) continue;
-                                let edx = e.x - enemy.x; let edy = e.y - enemy.y;
-                                if (edx * edx + edy * edy <= aoeRangeSq) {
-                                    e.applyDamage(baseDmg * 0.5, data.ignoreDef, false, this);
-                                    if (data.slowDur) { e.status.slowFactor = data.slowFactor; e.status.slowTimer = data.slowDur; }
-                                    if (data.paralyzeChance && Math.random() < data.paralyzeChance) e.status.paralyzed = true;
-                                    if (data.burnChance && Math.random() < data.burnChance) { e.status.burnTimer = 180; e.status.burnDmg = Math.max(1, Math.floor(baseDmg * 0.05)); }
-                                    if (data.freezeChance && Math.random() < data.freezeChance) e.status.frozenTimer = 120;
-                                }
-                            }
-                        } else {
-                            enemy.applyDamage(baseDmg, data.ignoreDef, false, this);
-                        }
-                        
-                        if (data.slowDur) {
-                            enemy.status.slowFactor = data.slowFactor;
-                            enemy.status.slowTimer = data.slowDur;
-                        }
-                        if (data.paralyzeChance && Math.random() < data.paralyzeChance) enemy.status.paralyzed = true;
-
-                        if (data.multiHit && data.multiHit > 1) {
-                            for (let i = 1; i < data.multiHit; i++) {
-                                setTimeout(() => {
-                                    let t = (bestEnemy && bestEnemy.hp > 0) ? bestEnemy : enemies.find(e => e.hp > 0);
-                                    if (t) {
-                                        t.applyDamage(baseDmg, data.ignoreDef, false, this);
-                                        if (this.data && this.data.paralyzeChance && Math.random() < this.data.paralyzeChance) t.status.paralyzed = true;
-                                    }
-                                }, (data.multiHitDelay || 10) * 16.66 * i);
-                            }
-                        }
+                        // Single: 프로젝타일 발사
+                        this.attackFrame = 8;
+                        projectiles.push(new Projectile(this.x, this.y, bestEnemy, this, damageMult));
                     }
                 }
             }
         }
 
         if (data.hasIntimidate && frame % 60 === 0) {
-            visualEffects.push(new BubbleEffect(this.x, this.y, 'rgba(239, 68, 68, 0.3)', data.auraRange));
+            if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(this.x, this.y, 'rgba(239, 68, 68, 0.3)', data.auraRange));
             for (let e of enemies) {
                 let dx = e.x - this.x; let dy = e.y - this.y;
                 if (dx*dx + dy*dy <= data.auraRange * data.auraRange) {
                     if (e.status.atkDownFactor > 0.75) {
                         e.status.atkDownFactor -= 0.05;
                         e.status.atkDownTimer = 99999;
-                        if (Math.random() < 0.3) visualEffects.push(new TextEffect(e.x, e.y - 20, '위협!', '#ef4444'));
+                        if (Math.random() < 0.3 && visualEffects.length < 200) visualEffects.push(new TextEffect(e.x, e.y - 20, '위협!', '#ef4444'));
                     }
                 }
             }
@@ -1619,9 +1579,9 @@ class Projectile {
 
 // Visual Effects
 class ExplosionEffect {
-    constructor(x, y, radius, color) { this.x=x; this.y=y; this.maxRadius=radius; this.color=color; this.radius=0; this.alpha=0.8; }
-    update() { this.radius += 5; this.alpha -= 0.05; }
-    draw() { ctx.globalAlpha=Math.max(0,this.alpha); ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+    constructor(x, y, radius, color) { this.x=x; this.y=y; this.maxRadius=radius; this.color=color; this.radius=0; this.alpha=0.8; this.timer=16; }
+    update() { this.radius += this.maxRadius/16; this.alpha -= 0.05; this.timer--; }
+    draw() { if(this.alpha<=0) return; ctx.globalAlpha=Math.max(0,this.alpha); ctx.fillStyle=this.color; ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
 }
 class TextEffect {
     constructor(x,y,text,color) { this.x=x; this.y=y; this.text=text; this.color=color; this.timer=30; }
@@ -1920,6 +1880,9 @@ function animate() {
                 waveEl.innerText = wave;
                 btnStartWave.disabled = false; btnStartWave.innerText = '웨이브 시작!';
                 frame = 0;
+                
+                // 웨이브 완료 시 자동 저장
+                if (typeof saveGame === 'function') saveGame();
             }
         }
         frame++;
@@ -1960,13 +1923,7 @@ const tutTooltip = document.getElementById('tut-tooltip');
 const tutText = document.getElementById('tut-text');
 let tutStep = 0;
 
-document.getElementById('btn-tut-no').addEventListener('click', () => { tutOverlay.style.display = 'none'; animate(); });
-document.getElementById('btn-tut-yes').addEventListener('click', () => {
-    tutOverlay.style.display = 'none';
-    startTutorial();
-    animate();
-});
-document.getElementById('btn-tut-next').addEventListener('click', () => { if (tutStep === 3) nextTutorial(); });
+// Tutorial listeners moved to Account System at the bottom
 
 function startTutorial() {
     tutStep = 1; tutTooltip.style.display = 'block'; tutTooltip.style.top = '100px'; tutTooltip.style.left = '320px';
@@ -2509,7 +2466,7 @@ if (btnStartRaid) {
     });
 }
 
-// Override gameLoop UI drawing for virtual HP
+//Override gameLoop UI drawing for virtual HP
 const originalDrawBackground = drawBackground;
 drawBackground = function() {
     originalDrawBackground();
@@ -2526,3 +2483,201 @@ drawBackground = function() {
         ctx.fillText(`레이드 가상 체력: ${Math.max(0, Math.floor(raidVirtualHp))} / ${raidVirtualMaxHp}`, 20, 30);
     }
 };
+
+// ==========================================
+// Account & Save/Load System (localStorage)
+// ==========================================
+const loginOverlay = document.getElementById('login-overlay');
+const loginId = document.getElementById('login-id');
+const loginPw = document.getElementById('login-pw');
+const btnLogin = document.getElementById('btn-login');
+const userStatusBar = document.getElementById('user-status-bar');
+const userNameDisplay = document.getElementById('user-name-display');
+const btnSaveGame = document.getElementById('btn-save-game');
+const btnLogout = document.getElementById('btn-logout');
+
+let currentUser = null;
+
+function loadUsers() {
+    return JSON.parse(localStorage.getItem('pokemon_defense_users')) || {};
+}
+
+function saveUsers(users) {
+    localStorage.setItem('pokemon_defense_users', JSON.stringify(users));
+}
+
+if (btnLogin) {
+    btnLogin.addEventListener('click', () => {
+        const id = loginId.value.trim();
+        const pw = loginPw.value;
+        if (!id || !pw) {
+            alert('이름과 비밀번호를 입력해주세요.');
+            return;
+        }
+
+        const users = loadUsers();
+        if (users[id]) {
+            if (users[id].password === pw) {
+                // 로그인 성공
+                currentUser = id;
+                loginOverlay.style.display = 'none';
+                userStatusBar.style.display = 'flex';
+                userNameDisplay.innerText = currentUser;
+                
+                if (users[id].hasSeenTutorial) {
+                    // 세이브 데이터가 있으면 불러오기
+                    if (users[id].saveData) {
+                        loadGame(users[id].saveData);
+                    }
+                    animate();
+                } else {
+                    // 첫 로그인이나 튜토리얼을 안 본 경우
+                    tutOverlay.style.display = 'flex';
+                }
+            } else {
+                alert('비밀번호가 틀렸습니다. 다시 확인해주세요.');
+            }
+        } else {
+            // 회원가입
+            users[id] = {
+                password: pw,
+                hasSeenTutorial: false,
+                saveData: null
+            };
+            saveUsers(users);
+            currentUser = id;
+            loginOverlay.style.display = 'none';
+            userStatusBar.style.display = 'flex';
+            userNameDisplay.innerText = currentUser;
+            
+            // 신규 가입이므로 튜토리얼 물어보기
+            tutOverlay.style.display = 'flex';
+        }
+    });
+}
+
+function updateTutorialSeen() {
+    if (!currentUser) return;
+    const users = loadUsers();
+    if (users[currentUser]) {
+        users[currentUser].hasSeenTutorial = true;
+        saveUsers(users);
+    }
+}
+
+// 튜토리얼 시작 시 seen 처리
+document.getElementById('btn-tut-no').addEventListener('click', () => { 
+    tutOverlay.style.display = 'none'; 
+    updateTutorialSeen();
+    animate(); 
+});
+document.getElementById('btn-tut-yes').addEventListener('click', () => {
+    tutOverlay.style.display = 'none';
+    updateTutorialSeen();
+    startTutorial();
+    animate();
+});
+// 튜토리얼 종료 버튼 오버라이드 (마지막 스텝에서)
+document.getElementById('btn-tut-next').addEventListener('click', () => { 
+    if (tutStep === 3) nextTutorial(); 
+});
+
+function serializeGameState() {
+    const serializedTowers = towers.map(t => ({
+        gridX: t.gridX,
+        gridY: t.gridY,
+        baseId: t.baseId,
+        level: t.level,
+        damage: t.damage,
+        range: t.range,
+        cooldown: t.cooldown,
+        totalInvested: t.totalInvested,
+        kills: t.kills,
+        item: t.item
+    }));
+
+    return {
+        berries,
+        lives,
+        wave,
+        currentRound,
+        inventory: { ...inventory },
+        towers: serializedTowers,
+        clearedRaidsThisRound: [...clearedRaidsThisRound],
+        zeraoraUnlocked: window.zeraoraUnlocked,
+        tutStep: tutStep
+    };
+}
+
+function saveGame() {
+    if (!currentUser) return;
+    const users = loadUsers();
+    if (users[currentUser]) {
+        users[currentUser].saveData = serializeGameState();
+        saveUsers(users);
+        visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '저장 완료!', '#22c55e'));
+    }
+}
+
+function loadGame(saveData) {
+    if (!saveData) return;
+    
+    berries = saveData.berries;
+    lives = saveData.lives;
+    wave = saveData.wave;
+    currentRound = saveData.currentRound;
+    
+    if (saveData.inventory) {
+        inventory = { ...saveData.inventory };
+    }
+    
+    clearedRaidsThisRound = saveData.clearedRaidsThisRound || [];
+    window.zeraoraUnlocked = saveData.zeraoraUnlocked || false;
+    tutStep = saveData.tutStep || 0;
+    
+    // UI 업데이트 (레이드 버튼)
+    if (clearedRaidsThisRound.includes('type_null')) {
+        const btn = document.getElementById('btn-build-typenull');
+        if (btn) btn.style.display = 'flex';
+    }
+    if (window.zeraoraUnlocked) {
+        const btn = document.getElementById('btn-build-zeraora');
+        if (btn) btn.style.display = 'flex';
+    }
+    
+    // 타워 복구
+    towers.length = 0; // 초기화
+    if (saveData.towers) {
+        saveData.towers.forEach(tData => {
+            const t = new Tower(tData.gridX, tData.gridY, tData.baseId);
+            t.level = tData.level;
+            t.damage = tData.damage;
+            t.range = tData.range;
+            t.cooldown = tData.cooldown;
+            t.totalInvested = tData.totalInvested;
+            t.kills = tData.kills || 0;
+            t.item = tData.item || null;
+            towers.push(t);
+        });
+    }
+    
+    // 렌더링 업데이트
+    berriesEl.innerText = berries;
+    livesEl.innerText = Math.ceil(Math.max(0, lives));
+    waveEl.innerText = wave;
+    renderInventory();
+    renderShop();
+    renderBackgroundToOffscreen();
+}
+
+if (btnSaveGame) {
+    btnSaveGame.addEventListener('click', saveGame);
+}
+
+if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+        saveGame(); // 로그아웃 전 자동 저장
+        currentUser = null;
+        location.reload();
+    });
+}

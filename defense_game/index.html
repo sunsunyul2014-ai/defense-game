@@ -8,8 +8,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Login/Register Overlay -->
+    <div id="login-overlay" class="overlay">
+        <div class="modal">
+            <h2>로그인 및 회원가입</h2>
+            <p>이름과 비밀번호를 입력하세요. 이름이 없으면 자동으로 가입됩니다.</p>
+            <div style="display: flex; flex-direction: column; gap: 10px; margin: 20px 0;">
+                <input type="text" id="login-id" placeholder="이름 (ID)" style="padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: white;">
+                <input type="password" id="login-pw" placeholder="비밀번호" style="padding: 10px; border-radius: 5px; border: 1px solid #475569; background: #1e293b; color: white;">
+            </div>
+            <div class="modal-btns">
+                <button id="btn-login" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">로그인 / 시작</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Tutorial Overlay -->
-    <div id="tutorial-overlay" class="overlay">
+    <div id="tutorial-overlay" class="overlay" style="display: none;">
         <div class="modal">
             <h2>환영합니다!</h2>
             <p>새로운 시스템이 도입된 포켓몬 디펜스의 튜토리얼을 진행하시겠습니까?</p>
@@ -139,6 +154,13 @@
                 <p>❤️ 체력: <span id="lives">500</span></p>
                 <p><img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/oran-berry.png" alt="Berry" class="berry-icon"> 열매: <span id="berries">100</span></p>
                 <p>🌊 웨이브: <span id="wave">1</span> / 20</p>
+            </div>
+
+            <!-- User Status Bar -->
+            <div id="user-status-bar" style="position: absolute; top: 10px; right: 20px; display: none; gap: 10px; align-items: center; z-index: 50; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px;">
+                <span id="user-name-display" style="color: #60a5fa; font-weight: bold;">User</span>
+                <button id="btn-save-game" style="background: #22c55e; border: none; padding: 5px 10px; border-radius: 5px; color: white; cursor: pointer; font-size: 0.8rem; font-weight: bold;">저장</button>
+                <button id="btn-logout" style="background: #ef4444; border: none; padding: 5px 10px; border-radius: 5px; color: white; cursor: pointer; font-size: 0.8rem; font-weight: bold;">로그아웃</button>
             </div>
 
             <div id="top-buttons-container">
