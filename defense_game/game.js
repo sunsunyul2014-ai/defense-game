@@ -2498,7 +2498,7 @@ function renderSnorlaxShop() {
             btn.style.border = 'none';
             btn.style.borderRadius = '4px';
         } else {
-            btn.innerText = \`강화 (\${cost} 🍡)\`;
+            btn.innerText = `강화 (${cost} 🍡)`;
             btn.style.background = (currentPoffins >= cost) ? '#10b981' : '#475569';
             btn.style.color = 'white';
             btn.style.cursor = (currentPoffins >= cost) ? 'pointer' : 'not-allowed';
