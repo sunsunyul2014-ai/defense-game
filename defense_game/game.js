@@ -93,7 +93,7 @@ const POKEMON_DATA = {
     
     'litten': { name: '냐오불', spriteId: 725, cost: 50, range: 80, damage: 25, cooldown: 40, type: 'single', color: '#ef4444', desc: '불꽃 고양이! (근접 단일 공격)', evolveLvl: 8, evolveTo: 'torracat', attackStyle: 'fire' },
     'torracat': { name: '냐오히트', spriteId: 726, cost: 0, range: 120, damage: 55, cooldown: 40, type: 'aoe', aoeRange: 70, color: '#dc2626', desc: '목의 방울에서 불꽃을 내뿜습니다. (범위 공격 + 공속 증가 + 20% 화상)', burnChance: 0.2, evolveLvl: 15, evolveCost: 300, evolveTo: 'incineroar', attackStyle: 'fire' },
-    'incineroar': { name: '어흥염', spriteId: 727, cost: 0, range: 190, damage: 120, cooldown: 60, type: 'aoe', aoeRange: 90, color: '#b91c1c', desc: '강력한 힐 악역 레슬러! (범위 딜 + 거북왕 범위 내 적에게 영구 공깎 25% 위협 펄스)', hasIntimidate: true, auraRange: 190, attackStyle: 'fire' },
+    'incineroar': { name: '어흥염', spriteId: 727, cost: 0, range: 80, damage: 120, cooldown: 60, type: 'aoe', aoeRange: 90, color: '#b91c1c', desc: '강력한 힐 악역 레슬러! (근접 범위 딜 + 주변 적에게 영구 공깎 25% 위협 펄스)', hasIntimidate: true, auraRange: 80, attackStyle: 'fire' },
 
     'popplio': { name: '누리공', spriteId: 728, cost: 50, range: 130, damage: 15, cooldown: 45, type: 'aoe', aoeRange: 60, color: '#3b82f6', desc: '물풍선을 만들어 공격합니다. (넓은 범위 + 10% 적 공격력 하락)', atkDownFactor: 0.9, debuffDur: 120, evolveLvl: 8, evolveTo: 'brionne', attackStyle: 'water' },
     'brionne': { name: '키요공', spriteId: 729, cost: 0, range: 160, damage: 35, cooldown: 45, type: 'aoe', aoeRange: 80, color: '#2563eb', desc: '춤추며 물풍선을 더 멀리 넓게 던집니다. (사거리/범위 증가 + 10% 적 공깎)', atkDownFactor: 0.9, debuffDur: 150, evolveLvl: 15, evolveCost: 300, evolveTo: 'primarina', attackStyle: 'water' },
@@ -1344,7 +1344,25 @@ class Tower {
                         let baseDmg = this.damage * damageMult;
                         if (this.data && this.data.bonusDamageToParalyzed && (enemy.status.paralyzed || enemy.status.stunTimer > 0)) baseDmg *= this.data.bonusDamageToParalyzed;
                         
-                        enemy.applyDamage(baseDmg, data.ignoreDef, false, this);
+                        if (data.type === 'aoe' && data.aoeRange) {
+                            // 광역 공격: 폭발 이펙트 + aoeRange 내 모든 적에게 피해
+                            visualEffects.push(new ExplosionEffect(enemy.x, enemy.y, data.aoeRange, data.color));
+                            enemy.applyDamage(baseDmg, data.ignoreDef, false, this);
+                            let aoeRangeSq = data.aoeRange * data.aoeRange;
+                            for (let e of enemies) {
+                                if (e === enemy) continue;
+                                let edx = e.x - enemy.x; let edy = e.y - enemy.y;
+                                if (edx * edx + edy * edy <= aoeRangeSq) {
+                                    e.applyDamage(baseDmg * 0.5, data.ignoreDef, false, this);
+                                    if (data.slowDur) { e.status.slowFactor = data.slowFactor; e.status.slowTimer = data.slowDur; }
+                                    if (data.paralyzeChance && Math.random() < data.paralyzeChance) e.status.paralyzed = true;
+                                    if (data.burnChance && Math.random() < data.burnChance) { e.status.burnTimer = 180; e.status.burnDmg = Math.max(1, Math.floor(baseDmg * 0.05)); }
+                                    if (data.freezeChance && Math.random() < data.freezeChance) e.status.frozenTimer = 120;
+                                }
+                            }
+                        } else {
+                            enemy.applyDamage(baseDmg, data.ignoreDef, false, this);
+                        }
                         
                         if (data.slowDur) {
                             enemy.status.slowFactor = data.slowFactor;
@@ -1760,8 +1778,38 @@ canvas.addEventListener('click', (e) => {
                 return;
             }
         }
-        towers.push(new Tower(cellX, cellY, selectedBuildType));
+        // 레이드 보상 포켓몬(타입:널, 제라오라)은 1번만 배치 가능
+        if (selectedBuildType === 'type_null') {
+            const alreadyPlaced = towers.some(t => t.baseId === 'type_null' || t.baseId === 'silvally');
+            if (alreadyPlaced) {
+                visualEffects.push(new TextEffect(mouseX, mouseY - 20, "이미 배치됨!", '#ef4444'));
+                return;
+            }
+        }
+        if (selectedBuildType === 'zeraora') {
+            const alreadyPlaced = towers.some(t => t.baseId === 'zeraora' || t.baseId === 'mega_zeraora');
+            if (alreadyPlaced) {
+                visualEffects.push(new TextEffect(mouseX, mouseY - 20, "이미 배치됨!", '#ef4444'));
+                return;
+            }
+        }
+        const typeToPlace = selectedBuildType;
+        towers.push(new Tower(cellX, cellY, typeToPlace));
         berries -= cost;
+        
+        // 레이드 보상 포켓몬은 배치 후 버튼 숨기기
+        if (typeToPlace === 'type_null') {
+            const btn = document.getElementById('btn-build-typenull');
+            if (btn) btn.style.display = 'none';
+            selectedBuildType = 'charmander';
+            document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('active'));
+        }
+        if (typeToPlace === 'zeraora') {
+            const btn = document.getElementById('btn-build-zeraora');
+            if (btn) btn.style.display = 'none';
+            selectedBuildType = 'charmander';
+            document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('active'));
+        }
         
         if (tutStep === 1) nextTutorial();
     } else if (!isPath && berries < cost) {
