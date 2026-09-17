@@ -1,4 +1,4 @@
-const canvas = document.getElementById('gameCanvas');
+﻿const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const bgCanvas = document.createElement('canvas');
@@ -361,9 +361,11 @@ btnUpgrade.addEventListener('click', () => {
         selectedTower.level++;
         selectedTower.totalInvested += upgCost;
         if (selectedTower.baseId === 'sigilyph' || selectedTower.baseId === 'rowlet' || selectedTower.baseId === 'dartrix' || selectedTower.baseId === 'decidueye') {
-            selectedTower.damage += 1;
+            selectedTower.baseDamage += 1;
+            if (typeof selectedTower.applyGlobalUpgrades === 'function') selectedTower.applyGlobalUpgrades();
         } else {
-            selectedTower.damage += 5;
+            selectedTower.baseDamage += 5;
+            if (typeof selectedTower.applyGlobalUpgrades === 'function') selectedTower.applyGlobalUpgrades();
         }
         updateUI();
     }
@@ -387,9 +389,10 @@ function doEvolve(newBaseId, berryCost, consumeItem) {
     
     const newData = POKEMON_DATA[newBaseId];
     selectedTower.baseId = newBaseId;
-    selectedTower.range = newData.range;
-    selectedTower.damage = newData.damage + (selectedTower.level * 2);
-    selectedTower.cooldown = newData.cooldown;
+    selectedTower.baseRange = newData.range;
+    selectedTower.baseDamage = newData.damage + (selectedTower.level * 2);
+    selectedTower.baseCooldown = newData.cooldown;
+    if (typeof selectedTower.applyGlobalUpgrades === 'function') selectedTower.applyGlobalUpgrades();
     
     visualEffects.push(new BubbleEffect(selectedTower.x, selectedTower.y, '#fcd34d', 100));
     updateUI();
@@ -1037,13 +1040,17 @@ class Tower {
 
         const data = POKEMON_DATA[baseId];
         this.totalInvested = data.cost;
-        this.range = data.range;
+        this.baseDamage = data.damage;
+        this.baseRange = data.range;
+        this.baseCooldown = data.cooldown;
+
+        this.range = this.baseRange;
 
         // 라운드가 지날 때마다 기초 능력치 상승 (데미지 20% 증가)
         const dmgBoost = 1 + (currentRound - 1) * 0.2;
 
-        this.damage = Math.floor(data.damage * dmgBoost);
-        this.cooldown = data.cooldown; // 공속 증가 없음
+        this.damage = Math.floor(this.baseDamage * dmgBoost);
+        this.cooldown = this.baseCooldown; // 공속 증가 없음
         
         this.sleepTimer = 0;
         this.yawnTimer = 0;
@@ -1083,9 +1090,13 @@ class Tower {
         const getLv = (statKey) => (famUpg[statKey] || 0);
 
         const dmgBoost = 1 + (currentRound - 1) * 0.2;
-        this.damage = Math.floor(data.damage * dmgBoost);
-        this.range = data.range;
-        this.cooldown = data.cooldown;
+        this.damage = Math.floor(this.baseDamage * dmgBoost);
+        this.baseDamage = data.damage;
+        this.baseRange = data.range;
+        this.baseCooldown = data.cooldown;
+
+        this.range = this.baseRange;
+        this.cooldown = this.baseCooldown;
         
         this.globalBurnChance = 0;
         this.globalParalyzeChance = 0;
@@ -1533,6 +1544,17 @@ class Tower {
                         e.status.atkDownTimer = 99999;
                         if (Math.random() < 0.3 && visualEffects.length < 200) visualEffects.push(new TextEffect(e.x, e.y - 20, '위협!', '#ef4444'));
                     }
+                }
+            }
+        }
+
+        if (this.hasGlobalIntimidate && frame % 300 === 0) {
+            if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(this.x, this.y, 'rgba(59, 130, 246, 0.3)', 150));
+            for (let e of enemies) {
+                if (e.status.atkDownFactor > 0.75) {
+                    e.status.atkDownFactor -= 0.05;
+                    e.status.atkDownTimer = 99999;
+                    if (Math.random() < 0.1 && visualEffects.length < 200) visualEffects.push(new TextEffect(e.x, e.y - 20, '전역 위협!', '#3b82f6'));
                 }
             }
         }
@@ -2132,8 +2154,8 @@ function animate() {
             if (users[currentUser]) saveUsers(users);
         }
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ef4444'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 20);
+        const gameOverScreen = document.getElementById('game-over-screen');
+        if (gameOverScreen) gameOverScreen.style.display = 'flex';
         return;
     }
 
@@ -2541,6 +2563,9 @@ function buySnorlaxUpgrade(family, statKey, cost) {
                     tower.applyGlobalUpgrades();
                 }
             }
+        }
+        if (selectedTower && familyKeys.includes(selectedTower.baseId)) {
+            updateUI();
         }
     }
 }
@@ -3034,8 +3059,11 @@ function serializeGameState() {
         baseId: t.baseId,
         level: t.level,
         damage: t.damage,
+        baseDamage: t.baseDamage,
         range: t.range,
+        baseRange: t.baseRange,
         cooldown: t.cooldown,
+        baseCooldown: t.baseCooldown,
         totalInvested: t.totalInvested,
         kills: t.kills,
         item: t.item
@@ -3097,8 +3125,11 @@ function loadGame(saveData) {
             const t = new Tower(tData.gridX, tData.gridY, tData.baseId);
             t.level = tData.level;
             t.damage = tData.damage;
+            t.baseDamage = tData.baseDamage || tData.damage;
             t.range = tData.range;
+            t.baseRange = tData.baseRange || tData.range;
             t.cooldown = tData.cooldown;
+            t.baseCooldown = tData.baseCooldown || tData.cooldown;
             t.totalInvested = tData.totalInvested;
             t.kills = tData.kills || 0;
             t.item = tData.item || null;
@@ -3123,6 +3154,13 @@ if (btnLogout) {
     btnLogout.addEventListener('click', () => {
         saveGame(); // 로그아웃 전 자동 저장
         currentUser = null;
+        location.reload();
+    });
+}
+
+const btnRestartGame = document.getElementById('btn-restart-game');
+if (btnRestartGame) {
+    btnRestartGame.addEventListener('click', () => {
         location.reload();
     });
 }
