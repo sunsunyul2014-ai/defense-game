@@ -1520,7 +1520,7 @@ class Tower {
             }
         }
 
-        if (data.hasIntimidate && frame % 60 === 0) {
+        if (data.hasIntimidate && frame % 300 === 0) {
             if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(this.x, this.y, 'rgba(239, 68, 68, 0.3)', data.auraRange));
             for (let e of enemies) {
                 let dx = e.x - this.x; let dy = e.y - this.y;
