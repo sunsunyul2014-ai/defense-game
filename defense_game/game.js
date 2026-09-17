@@ -266,6 +266,8 @@ document.querySelectorAll('.tower-btn').forEach(btn => {
         document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('active'));
         e.currentTarget.classList.add('active');
         selectedTower = null;
+        usingItem = null;
+        renderInventory();
         updateUI();
     });
 });
@@ -491,6 +493,7 @@ function startNextRound() {
     initMap();
     
     visualEffects.push(new TextEffect(canvas.width / 2, canvas.height / 2, `ROUND ${currentRound} 시작!`, '#ef4444'));
+    if (typeof saveGame === 'function') saveGame();
 }
 
 const enemies = [];
