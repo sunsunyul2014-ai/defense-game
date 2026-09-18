@@ -184,23 +184,24 @@
             <!-- User Status Bar -->
             <div id="user-status-bar" style="position: absolute; top: 10px; right: 20px; display: none; gap: 10px; align-items: center; z-index: 50; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px;">
                 <span id="user-name-display" style="color: #60a5fa; font-weight: bold;">User</span>
+                <button id="btn-speed-toggle" style="background: #f59e0b; border: none; padding: 5px 10px; border-radius: 5px; color: white; cursor: pointer; font-size: 0.8rem; font-weight: bold;">▶ 1배속</button>
                 <button id="btn-save-game" style="background: #22c55e; border: none; padding: 5px 10px; border-radius: 5px; color: white; cursor: pointer; font-size: 0.8rem; font-weight: bold;">저장</button>
                 <button id="btn-logout" style="background: #ef4444; border: none; padding: 5px 10px; border-radius: 5px; color: white; cursor: pointer; font-size: 0.8rem; font-weight: bold;">로그아웃</button>
             </div>
 
-            <div id="top-buttons-container" style="flex-shrink: 0;">
+            <div id="top-buttons-container">
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <button id="btn-open-enc" style="flex: 1; padding: 4px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #a78bfa; font-size: 0.8rem;">📖 도감</button>
-                    <button id="btn-open-shop" style="flex: 1; padding: 4px; background: linear-gradient(135deg, #22c55e, #16a34a); border-color: #4ade80; font-size: 0.8rem;">🏪 켈리몬 상점</button>
+                    <button id="btn-open-enc" style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #a78bfa; font-size: 0.9rem;">📖 도감</button>
+                    <button id="btn-open-shop" style="flex: 1; background: linear-gradient(135deg, #22c55e, #16a34a); border-color: #4ade80; font-size: 0.9rem;">🏪 상점</button>
                 </div>
                 <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <button id="btn-open-snorlax-shop" style="flex: 1; padding: 4px; background: linear-gradient(135deg, #0ea5e9, #0369a1); border-color: #38bdf8; font-size: 0.8rem;">💤 잠만보 상점</button>
-                    <button id="btn-open-raid" style="flex: 1; padding: 4px; background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; font-size: 0.8rem; font-weight: bold;">⚔️ 레이드</button>
+                    <button id="btn-open-snorlax-shop" style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0369a1); border-color: #38bdf8; font-size: 0.9rem;">💤 잠만보 상점</button>
+                    <button id="btn-open-raid" style="flex: 1; background: linear-gradient(135deg, #9333ea, #4c1d95); border-color: #c084fc; font-size: 0.9rem; font-weight: bold;">⚔️ 레이드</button>
                 </div>
-                <button id="btn-start-wave" style="margin-top: 5px; padding: 8px; width: 100%; font-size: 0.9rem;">웨이브 시작!</button>
+                <button id="btn-start-wave" style="margin-top: 5px; width: 100%;">웨이브 시작!</button>
             </div>
             
-            <div id="build-menu" class="controls" style="max-height: 250px; overflow-y: auto; flex-shrink: 0;">
+            <div id="build-menu" class="controls" style="max-height: 250px; overflow-y: auto;">
                 <p class="instruction" style="position: sticky; top: 0; background: #1e293b; padding-bottom: 5px; z-index: 1;">타워를 선택하고 배치하세요!</p>
                 <button class="tower-btn active" data-type="charmander">
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png" class="btn-sprite">
@@ -321,12 +322,6 @@
         
         <div id="canvas-container">
             <canvas id="gameCanvas" width="800" height="600"></canvas>
-            
-            <!-- Game Over Screen -->
-            <div id="game-over-screen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 100; flex-direction: column; align-items: center; justify-content: center;">
-                <h1 style="color: #ef4444; font-size: 3rem; margin-bottom: 20px;">GAME OVER</h1>
-                <button id="btn-restart-game" style="background: #3b82f6; color: white; border: none; padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; font-weight: bold;">처음으로 돌아가기</button>
-            </div>
             
             <!-- Tutorial Tooltips -->
             <div id="tut-tooltip" class="tooltip" style="display: none;">

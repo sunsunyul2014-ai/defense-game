@@ -1,4 +1,4 @@
-﻿const canvas = document.getElementById('gameCanvas');
+const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const bgCanvas = document.createElement('canvas');
@@ -266,8 +266,6 @@ document.querySelectorAll('.tower-btn').forEach(btn => {
         document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('active'));
         e.currentTarget.classList.add('active');
         selectedTower = null;
-        usingItem = null;
-        renderInventory();
         updateUI();
     });
 });
@@ -361,11 +359,9 @@ btnUpgrade.addEventListener('click', () => {
         selectedTower.level++;
         selectedTower.totalInvested += upgCost;
         if (selectedTower.baseId === 'sigilyph' || selectedTower.baseId === 'rowlet' || selectedTower.baseId === 'dartrix' || selectedTower.baseId === 'decidueye') {
-            selectedTower.baseDamage += 1;
-            if (typeof selectedTower.applyGlobalUpgrades === 'function') selectedTower.applyGlobalUpgrades();
+            selectedTower.damage += 1;
         } else {
-            selectedTower.baseDamage += 5;
-            if (typeof selectedTower.applyGlobalUpgrades === 'function') selectedTower.applyGlobalUpgrades();
+            selectedTower.damage += 5;
         }
         updateUI();
     }
@@ -389,10 +385,13 @@ function doEvolve(newBaseId, berryCost, consumeItem) {
     
     const newData = POKEMON_DATA[newBaseId];
     selectedTower.baseId = newBaseId;
-    selectedTower.baseRange = newData.range;
-    selectedTower.baseDamage = newData.damage + (selectedTower.level * 2);
-    selectedTower.baseCooldown = newData.cooldown;
-    if (typeof selectedTower.applyGlobalUpgrades === 'function') selectedTower.applyGlobalUpgrades();
+    if (typeof selectedTower.applyGlobalUpgrades === 'function') {
+        selectedTower.applyGlobalUpgrades();
+    } else {
+        selectedTower.range = newData.range;
+        selectedTower.damage = newData.damage + (selectedTower.level * 5);
+        selectedTower.cooldown = newData.cooldown;
+    }
     
     visualEffects.push(new BubbleEffect(selectedTower.x, selectedTower.y, '#fcd34d', 100));
     updateUI();
@@ -496,7 +495,6 @@ function startNextRound() {
     initMap();
     
     visualEffects.push(new TextEffect(canvas.width / 2, canvas.height / 2, `ROUND ${currentRound} 시작!`, '#ef4444'));
-    if (typeof saveGame === 'function') saveGame();
 }
 
 const enemies = [];
@@ -1040,17 +1038,13 @@ class Tower {
 
         const data = POKEMON_DATA[baseId];
         this.totalInvested = data.cost;
-        this.baseDamage = data.damage;
-        this.baseRange = data.range;
-        this.baseCooldown = data.cooldown;
-
-        this.range = this.baseRange;
+        this.range = data.range;
 
         // 라운드가 지날 때마다 기초 능력치 상승 (데미지 20% 증가)
         const dmgBoost = 1 + (currentRound - 1) * 0.2;
 
-        this.damage = Math.floor(this.baseDamage * dmgBoost);
-        this.cooldown = this.baseCooldown; // 공속 증가 없음
+        this.damage = Math.floor(data.damage * dmgBoost);
+        this.cooldown = data.cooldown; // 공속 증가 없음
         
         this.sleepTimer = 0;
         this.yawnTimer = 0;
@@ -1090,13 +1084,9 @@ class Tower {
         const getLv = (statKey) => (famUpg[statKey] || 0);
 
         const dmgBoost = 1 + (currentRound - 1) * 0.2;
-        this.damage = Math.floor(this.baseDamage * dmgBoost);
-        this.baseDamage = data.damage;
-        this.baseRange = data.range;
-        this.baseCooldown = data.cooldown;
-
-        this.range = this.baseRange;
-        this.cooldown = this.baseCooldown;
+        this.damage = Math.floor(data.damage * dmgBoost);
+        this.range = data.range;
+        this.cooldown = data.cooldown;
         
         this.globalBurnChance = 0;
         this.globalParalyzeChance = 0;
@@ -1220,6 +1210,16 @@ class Tower {
                 this.globalSpreadAngleMult = 1 - 0.50 * getR('narrow');
                 break;
         }
+        
+        let levelBonus = 0;
+        if (this.level > 1) {
+            if (this.baseId === 'sigilyph' || this.baseId === 'rowlet' || this.baseId === 'dartrix' || this.baseId === 'decidueye') {
+                levelBonus = (this.level - 1) * 1;
+            } else {
+                levelBonus = (this.level - 1) * 5;
+            }
+        }
+        this.damage += levelBonus;
     }
 
     draw() {
@@ -1534,7 +1534,7 @@ class Tower {
             }
         }
 
-        if (data.hasIntimidate && frame % 300 === 0) {
+        if (data.hasIntimidate && frame % 60 === 0) {
             if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(this.x, this.y, 'rgba(239, 68, 68, 0.3)', data.auraRange));
             for (let e of enemies) {
                 let dx = e.x - this.x; let dy = e.y - this.y;
@@ -1544,17 +1544,6 @@ class Tower {
                         e.status.atkDownTimer = 99999;
                         if (Math.random() < 0.3 && visualEffects.length < 200) visualEffects.push(new TextEffect(e.x, e.y - 20, '위협!', '#ef4444'));
                     }
-                }
-            }
-        }
-
-        if (this.hasGlobalIntimidate && frame % 300 === 0) {
-            if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(this.x, this.y, 'rgba(59, 130, 246, 0.3)', 150));
-            for (let e of enemies) {
-                if (e.status.atkDownFactor > 0.75) {
-                    e.status.atkDownFactor -= 0.05;
-                    e.status.atkDownTimer = 99999;
-                    if (Math.random() < 0.1 && visualEffects.length < 200) visualEffects.push(new TextEffect(e.x, e.y - 20, '전역 위협!', '#3b82f6'));
                 }
             }
         }
@@ -2016,6 +2005,9 @@ btnStartWave.addEventListener('click', () => {
 let lastRenderedBerries = -1;
 let lastRenderedLives = -1;
 
+window.gameSpeed = 1;
+window.isSecondPass = false;
+
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (berries !== lastRenderedBerries) {
@@ -2154,8 +2146,15 @@ function animate() {
             if (users[currentUser]) saveUsers(users);
         }
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        const gameOverScreen = document.getElementById('game-over-screen');
-        if (gameOverScreen) gameOverScreen.style.display = 'flex';
+        ctx.fillStyle = '#ef4444'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 20);
+        return;
+    }
+
+    if (window.gameSpeed === 2 && !window.isSecondPass) {
+        window.isSecondPass = true;
+        animate();
+        window.isSecondPass = false;
         return;
     }
 
@@ -2563,9 +2562,6 @@ function buySnorlaxUpgrade(family, statKey, cost) {
                     tower.applyGlobalUpgrades();
                 }
             }
-        }
-        if (selectedTower && familyKeys.includes(selectedTower.baseId)) {
-            updateUI();
         }
     }
 }
@@ -3059,11 +3055,8 @@ function serializeGameState() {
         baseId: t.baseId,
         level: t.level,
         damage: t.damage,
-        baseDamage: t.baseDamage,
         range: t.range,
-        baseRange: t.baseRange,
         cooldown: t.cooldown,
-        baseCooldown: t.baseCooldown,
         totalInvested: t.totalInvested,
         kills: t.kills,
         item: t.item
@@ -3108,16 +3101,6 @@ function loadGame(saveData) {
     window.zeraoraUnlocked = saveData.zeraoraUnlocked || false;
     tutStep = saveData.tutStep || 0;
     
-    // UI 업데이트 (레이드 버튼)
-    if (clearedRaidsThisRound.includes('type_null')) {
-        const btn = document.getElementById('btn-build-typenull');
-        if (btn) btn.style.display = 'flex';
-    }
-    if (window.zeraoraUnlocked) {
-        const btn = document.getElementById('btn-build-zeraora');
-        if (btn) btn.style.display = 'flex';
-    }
-    
     // 타워 복구
     towers.length = 0; // 초기화
     if (saveData.towers) {
@@ -3125,16 +3108,25 @@ function loadGame(saveData) {
             const t = new Tower(tData.gridX, tData.gridY, tData.baseId);
             t.level = tData.level;
             t.damage = tData.damage;
-            t.baseDamage = tData.baseDamage || tData.damage;
             t.range = tData.range;
-            t.baseRange = tData.baseRange || tData.range;
             t.cooldown = tData.cooldown;
-            t.baseCooldown = tData.baseCooldown || tData.cooldown;
             t.totalInvested = tData.totalInvested;
             t.kills = tData.kills || 0;
             t.item = tData.item || null;
             towers.push(t);
         });
+    }
+
+    // UI 업데이트 (레이드 버튼)
+    if (clearedRaidsThisRound.includes('type_null')) {
+        const alreadyPlaced = towers.some(t => t.baseId === 'type_null' || t.baseId === 'silvally');
+        const btn = document.getElementById('btn-build-typenull');
+        if (btn) btn.style.display = alreadyPlaced ? 'none' : 'flex';
+    }
+    if (window.zeraoraUnlocked) {
+        const alreadyPlaced = towers.some(t => t.baseId === 'zeraora' || t.baseId === 'mega_zeraora');
+        const btn = document.getElementById('btn-build-zeraora');
+        if (btn) btn.style.display = alreadyPlaced ? 'none' : 'flex';
     }
     
     // 렌더링 업데이트
@@ -3143,24 +3135,32 @@ function loadGame(saveData) {
     waveEl.innerText = wave;
     renderInventory();
     renderShop();
-    renderBackgroundToOffscreen();
+    initMap(); // Ensures path is correctly initialized for the current round
 }
 
 if (btnSaveGame) {
     btnSaveGame.addEventListener('click', saveGame);
 }
 
+const btnSpeedToggle = document.getElementById('btn-speed-toggle');
+if (btnSpeedToggle) {
+    btnSpeedToggle.addEventListener('click', () => {
+        if (window.gameSpeed === 1) {
+            window.gameSpeed = 2;
+            btnSpeedToggle.innerText = '▶▶ 2배속';
+            btnSpeedToggle.style.background = '#ef4444';
+        } else {
+            window.gameSpeed = 1;
+            btnSpeedToggle.innerText = '▶ 1배속';
+            btnSpeedToggle.style.background = '#f59e0b';
+        }
+    });
+}
+
 if (btnLogout) {
     btnLogout.addEventListener('click', () => {
         saveGame(); // 로그아웃 전 자동 저장
         currentUser = null;
-        location.reload();
-    });
-}
-
-const btnRestartGame = document.getElementById('btn-restart-game');
-if (btnRestartGame) {
-    btnRestartGame.addEventListener('click', () => {
         location.reload();
     });
 }
