@@ -2143,7 +2143,10 @@ function animate() {
     if (lives <= 0) {
         if (currentUser) {
             const users = loadUsers();
-            if (users[currentUser]) saveUsers(users);
+            if (users[currentUser]) {
+                delete users[currentUser].saveData; // Wipe save on death (permadeath)
+                saveUsers(users);
+            }
         }
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#ef4444'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
