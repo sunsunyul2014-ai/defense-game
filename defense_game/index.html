@@ -183,7 +183,7 @@
     </div>
 
     <div id="game-container">
-        <div id="ui-panel" style="max-height: calc(100vh - 60px); overflow-y: auto; padding-right: 5px;">
+        <div id="ui-panel" style="height: calc(100vh - 60px); display: flex; flex-direction: column; overflow: hidden; padding-right: 5px;">
             <h1>Poke Defense</h1>
             <div class="stats">
                 <p>❤️ 체력: <span id="lives">500</span></p>
@@ -212,7 +212,7 @@
                 <button id="btn-start-wave" style="margin-top: 5px; width: 100%;">웨이브 시작!</button>
             </div>
             
-            <div id="build-menu" class="controls" style="max-height: 250px; overflow-y: auto; flex-shrink: 0;">
+            <div id="build-menu" class="controls" style="flex: 1; min-height: 150px; overflow-y: auto;">
                 <p class="instruction" style="position: sticky; top: 0; background: #1e293b; padding-bottom: 5px; z-index: 1;">타워를 선택하고 배치하세요!</p>
                 <button class="tower-btn active" data-type="charmander">
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png" class="btn-sprite">
@@ -285,7 +285,7 @@
                 </button>
             </div>
 
-            <div id="upgrade-menu" class="controls" style="display: none;">
+            <div id="upgrade-menu" class="controls" style="display: none; flex: 1; min-height: 150px; overflow-y: auto;">
                 <h3 id="upg-name">파이리 Lv.1</h3>
                 <img id="upg-img" src="" alt="" style="width: 80px; height: 80px; align-self: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
                 <p class="instruction" id="upg-desc" style="color: #cbd5e1; margin-bottom:10px;">단일 대상 공격</p>
@@ -302,12 +302,12 @@
                 <button id="btn-close-upgrade" class="secondary" style="margin-top:auto;">뒤로 가기</button>
             </div>
             
-            <div id="inventory-panel" class="controls" style="margin-top: 15px; padding: 10px; flex-shrink: 0;">
+            <div id="inventory-panel" class="controls" style="margin-top: 15px; padding: 10px; flex: 1; min-height: 150px; overflow-y: auto; display: flex; flex-direction: column;">
                 <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 5px; margin-bottom: 10px;">
                     <h3 style="margin: 0; font-size: 1rem;">🎁 내 인벤토리</h3>
                     <button id="btn-cancel-item" style="display: none; background: #ef4444; border: none; padding: 4px 10px; font-size: 0.8rem; border-radius: 4px; color: white; cursor: pointer; font-weight: bold;">취소</button>
                 </div>
-                <div id="inv-slots" style="display: flex; gap: 8px; flex-wrap: wrap; max-height: 250px; overflow-y: auto;">
+                <div id="inv-slots" style="display: flex; gap: 8px; flex-wrap: wrap; flex: 1; overflow-y: auto;">
                     <!-- JS로 렌더링 -->
                     <p style="color: #64748b; font-size: 0.8rem; margin: 0;">가방이 비어있습니다.</p>
                 </div>
