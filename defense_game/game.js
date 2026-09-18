@@ -2148,6 +2148,8 @@ function animate() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#ef4444'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
         ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 20);
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+        if (gameOverOverlay) gameOverOverlay.style.display = 'flex';
         return;
     }
 
@@ -3140,6 +3142,13 @@ function loadGame(saveData) {
 
 if (btnSaveGame) {
     btnSaveGame.addEventListener('click', saveGame);
+}
+
+const btnRestartGame = document.getElementById('btn-restart-game');
+if (btnRestartGame) {
+    btnRestartGame.addEventListener('click', () => {
+        location.reload();
+    });
 }
 
 const btnSpeedToggle = document.getElementById('btn-speed-toggle');
