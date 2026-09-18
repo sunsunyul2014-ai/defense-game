@@ -212,7 +212,7 @@
                 <button id="btn-start-wave" style="margin-top: 5px; width: 100%;">웨이브 시작!</button>
             </div>
             
-            <div id="build-menu" class="controls" style="max-height: 250px; overflow-y: auto;">
+            <div id="build-menu" class="controls" style="max-height: 250px; overflow-y: auto; flex-shrink: 0;">
                 <p class="instruction" style="position: sticky; top: 0; background: #1e293b; padding-bottom: 5px; z-index: 1;">타워를 선택하고 배치하세요!</p>
                 <button class="tower-btn active" data-type="charmander">
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png" class="btn-sprite">
@@ -303,7 +303,10 @@
             </div>
             
             <div id="inventory-panel" class="controls" style="margin-top: 15px; padding: 10px; flex-shrink: 0;">
-                <h3 style="margin: 0 0 10px 0; font-size: 1rem; border-bottom: 1px solid #334155; padding-bottom: 5px;">🎒 내 인벤토리</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 5px; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 1rem;">🎁 내 인벤토리</h3>
+                    <button id="btn-cancel-item" style="display: none; background: #ef4444; border: none; padding: 4px 10px; font-size: 0.8rem; border-radius: 4px; color: white; cursor: pointer; font-weight: bold;">취소</button>
+                </div>
                 <div id="inv-slots" style="display: flex; gap: 8px; flex-wrap: wrap; max-height: 250px; overflow-y: auto;">
                     <!-- JS로 렌더링 -->
                     <p style="color: #64748b; font-size: 0.8rem; margin: 0;">가방이 비어있습니다.</p>

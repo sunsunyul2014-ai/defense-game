@@ -2688,6 +2688,15 @@ function renderInventory() {
     if (!hasItem) {
         invSlots.innerHTML = '<p style="color: #64748b; font-size: 0.8rem; margin: 0;">가방이 비어있습니다.</p>';
     }
+
+    const btnCancelItem = document.getElementById('btn-cancel-item');
+    if (btnCancelItem) {
+        btnCancelItem.style.display = usingItem ? 'block' : 'none';
+        btnCancelItem.onclick = () => {
+            usingItem = null;
+            renderInventory();
+        };
+    }
 }
 
 function getRandomShopItem() {
