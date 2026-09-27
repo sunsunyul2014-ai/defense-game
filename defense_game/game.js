@@ -2375,7 +2375,7 @@ function renderSnorlaxShop() {
     for (const [statKey, statInfo] of Object.entries(selData.stats)) {
         const lv = familyUpgrades[statKey] || 0;
         const maxLv = statInfo.max;
-        const cost = lv * 10 + 10;
+        const cost = lv * 2 + 3;
         
         const row = document.createElement('div');
         row.style.display = 'flex';
