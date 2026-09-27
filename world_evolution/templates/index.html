@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Evolution</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="game-container"></div>
+    
+    <!-- Big Event Splash Screen -->
+    <div id="event-splash" class="hidden">
+        <h1 id="event-splash-title">새로운 시대</h1>
+        <p id="event-splash-desc">문명이 발전했습니다.</p>
+    </div>
+
+    <!-- UI Overlay -->
+    <div id="ui-layer">
+        <!-- Top Bar -->
+        <div id="top-bar">
+            <div class="time-display" style="color: #4ade80;">시대: <span id="game-era">고대</span></div>
+            <div id="nation-badge" style="padding: 5px 15px; border-radius: 8px; font-weight: bold; margin-right: 15px; border: 2px solid white; cursor: pointer;" title="클릭하여 내 수도로 이동">내 국가</div>
+            <button id="btn-find-nation" style="margin-right: 15px; background: #3b82f6; border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold;">🎯 내 나라 찾기</button>
+            <div class="resource">👥 인구: <span id="res-pop">0</span> (작업: <span id="res-working">0</span>, 병사: <span id="res-soldiers">0</span>)</div>
+            <div class="time-display tooltip-container">날씨: <span id="game-weather" title="날씨 효과">맑음</span></div>
+            <div class="time-display">YEAR <span id="game-year">1</span></div>
+        </div>
+
+        <!-- Left Panel: Nation/City Info -->
+        <div id="left-panel" class="panel">
+            <h2 id="info-title">World Info</h2>
+            <div id="info-content">
+                <p>Welcome to World Evolution.</p>
+                <p>Select a tile to view details.</p>
+            </div>
+            
+            <h3 style="margin-top: 20px; color: #fbbf24; border-bottom: 1px solid #fbbf24; padding-bottom: 5px;">내 병력 현황</h3>
+            <div id="my-army-list" style="font-size: 0.9em; color: #cbd5e1; max-height: 200px; overflow-y: auto; margin-top: 10px;">
+                보유한 병력이 없습니다.
+            </div>
+        </div>
+
+        <!-- Right Panel: Menus -->
+        <div id="right-panel" class="panel">
+            <div id="menu-tabs">
+                <button class="menu-btn active" data-target="tab-build">건설</button>
+                <button class="menu-btn" data-target="tab-resource">자원</button>
+                <button class="menu-btn" data-target="tab-tech">기술</button>
+                <button class="menu-btn" data-target="tab-diplomacy">외교</button>
+            </div>
+            
+            <div id="menu-content">
+                <!-- 자원 탭 -->
+                <div id="tab-resource" class="tab-pane hidden">
+                    <h3 style="color:#22c55e; border-bottom:1px solid #22c55e; padding-bottom:5px; margin-bottom:10px;">식량 (포만감/영양소)</h3>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="resource" title="포만감: 1.0, 영양소: 0.5">🌾 밀: <span id="res-food_wheat">0</span></div>
+                        <div class="resource" title="포만감: 1.2, 영양소: 0.6">🍚 쌀: <span id="res-food_rice">0</span></div>
+                        <div class="resource" title="포만감: 1.1, 영양소: 0.4">🌽 옥수수: <span id="res-food_corn">0</span></div>
+                        <div class="resource" title="포만감: 1.5, 영양소: 0.3">🥔 감자: <span id="res-food_potato">0</span></div>
+                        <div class="resource" title="포만감: 0.5, 영양소: 2.0">🍎 과일: <span id="res-food_fruit">0</span></div>
+                        <div class="resource" title="포만감: 2.5, 영양소: 1.5">🥩 소고기: <span id="res-food_beef">0</span></div>
+                        <div class="resource" title="포만감: 2.0, 영양소: 1.2">🥓 돼지고기: <span id="res-food_pork">0</span></div>
+                        <div class="resource" title="포만감: 1.5, 영양소: 1.0">🍗 닭고기: <span id="res-food_chicken">0</span></div>
+                        <div class="resource" title="포만감: 1.5, 영양소: 1.2">🐟 물고기: <span id="res-food_fish">0</span></div>
+                        <div class="resource" title="포만감: 0.8, 영양소: 1.0">🥛 우유: <span id="res-food_milk">0</span></div>
+                    </div>
+                    
+                    <h3 style="color:#fbbf24; border-bottom:1px solid #fbbf24; padding-bottom:5px; margin:15px 0 10px 0;">기초 자원</h3>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="resource">💰 금: <span id="res-gold">0</span></div>
+                        <div class="resource">🌲 목재: <span id="res-wood">0</span></div>
+                        <div class="resource">⛏️ 돌: <span id="res-stone">0</span></div>
+                        <div class="resource">⛓️ 철: <span id="res-iron">0</span></div>
+                        <div class="resource">💧 물: <span id="res-water">0</span></div>
+                    </div>
+                    
+                    <h3 style="color:#60a5fa; border-bottom:1px solid #60a5fa; padding-bottom:5px; margin:15px 0 10px 0;">희귀 자원</h3>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="resource">💎 미네랄: <span id="res-mineral">0</span></div>
+                        <div class="resource">🪙 은: <span id="res-silver">0</span></div>
+                        <div class="resource">🥉 구리: <span id="res-copper">0</span></div>
+                        <div class="resource">⬛ 석탄: <span id="res-coal">0</span></div>
+                        <div class="resource">🛢️ 석유: <span id="res-oil">0</span></div>
+                        <div class="resource">☢️ 우라늄: <span id="res-uranium">0</span></div>
+                        <div class="resource" style="color:#d6d3d1;">⛓️ 티타늄: <span id="res-titanium">0</span></div>
+                        <div class="resource" style="color:#8b5cf6;">🌌 암흑물질: <span id="res-dark_matter">0</span></div>
+                    </div>
+                    
+                    <h3 style="color:#c084fc; border-bottom:1px solid #c084fc; padding-bottom:5px; margin:15px 0 10px 0;">가공 자원</h3>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="resource">📜 종이: <span id="res-paper">0</span></div>
+                        <div class="resource">🧱 갈은돌: <span id="res-cut_stone">0</span></div>
+                        <div class="resource">🧱 벽돌: <span id="res-brick">0</span></div>
+                        <div class="resource">🪞 유리: <span id="res-glass">0</span></div>
+                        <div class="resource" style="color:#ef4444;">💥 화약: <span id="res-gunpowder">0</span></div>
+                        <div class="resource" style="color:#f59e0b;">⛽ 가솔린: <span id="res-gasoline">0</span></div>
+                        <div class="resource" style="color:#fcd34d;" title="포만감: 3.0, 영양소: 2.0">🧀 치즈: <span id="res-food_cheese">0</span></div>
+                        <div class="resource" style="color:#d97706;" title="포만감: 2.5, 영양소: 1.0">🍞 빵: <span id="res-food_bread">0</span></div>
+                        <div class="resource" style="color:#ef4444;" title="포만감: 3.5, 영양소: 1.5">🌭 소시지: <span id="res-food_sausage">0</span></div>
+                        <div class="resource" style="color:#9f1239;" title="포만감: 1.0, 영양소: 3.0">🍷 와인: <span id="res-food_wine">0</span></div>
+                        <div class="resource" style="color:#7f1d1d;" title="포만감: 5.0, 영양소: 3.0">🥩 스테이크: <span id="res-food_steak">0</span></div>
+                        <div class="resource" style="color:#9ca3af;" title="포만감: 2.0, 영양소: 1.0">🥫 생선통조림: <span id="res-food_canned_fish">0</span></div>
+                        <div class="resource" style="color:#ea580c;" title="포만감: 4.0, 영양소: 2.5">🍲 스튜: <span id="res-food_stew">0</span></div>
+                    </div>
+                    
+                    <h3 style="color:#f472b6; border-bottom:1px solid #f472b6; padding-bottom:5px; margin:15px 0 10px 0;">첨단/우주 부품</h3>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="resource" style="color:#fbbf24;">⚔️ 청동: <span id="res-bronze">0</span></div>
+                        <div class="resource" style="color:#9ca3af;">⚙️ 강철: <span id="res-steel">0</span></div>
+                        <div class="resource" style="color:#c084fc;">🛸 합금: <span id="res-alloy">0</span></div>
+                        <div class="resource" style="color:#f472b6;">💡 부품: <span id="res-advanced_part">0</span></div>
+                        <div class="resource" style="color:#38bdf8;">🧪 플라스틱: <span id="res-plastic">0</span></div>
+                        <div class="resource" style="color:#2dd4bf;">💾 반도체: <span id="res-semiconductor">0</span></div>
+                        <div class="resource" style="color:#a78bfa;">🧠 AI칩: <span id="res-ai_chip">0</span></div>
+                        <div class="resource" style="color:#facc15;">⚡ 코어: <span id="res-energy_core">0</span></div>
+                        <div class="resource" style="color:#10b981;">☣️ 농축우라늄: <span id="res-enriched_uranium">0</span></div>
+                        <div class="resource" style="color:#cbd5e1;">🛡️ 복합소재: <span id="res-composite">0</span></div>
+                        <div class="resource" style="color:#3b82f6;">🌀 워프드라이브: <span id="res-warp_drive">0</span></div>
+                    </div>
+                </div>
+                
+                <!-- 건설 탭 -->
+                <div id="tab-build" class="tab-pane active">
+                    <div class="build-option"><span style="color:#ef4444; font-weight:bold;">⚔️ 영토 점령 (빈 땅/적 공격)</span><button class="build-btn" data-type="점령" style="background:#ef4444;">선택</button></div>
+                    <div class="build-option" style="background:rgba(255,255,255,0.05); border-radius:6px; padding:6px 10px;">
+                        <span style="color:#9ca3af; font-size:0.85em;" id="build-mode-status">건설 모드: 없음</span>
+                        <button id="btn-cancel-build" style="background:#6b7280; border:none; color:white; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:0.85em;">❌ 선택 취소</button>
+                    </div>
+
+                    <div id="era-고대-buildings" class="era-group">
+                        <h3 style="color:#fbbf24; border-bottom:1px solid #fbbf24; padding-bottom:5px;">[고대] 기초 시설</h3>
+                        <div class="build-option"><span>🏠 주택(1티어) (나무50)</span><button class="build-btn" data-type="주택(1티어)">건설</button></div>
+                        <div class="build-option"><span>🌾 밀 농장(1티어) - 평원 (나무50)</span><button class="build-btn" data-type="밀 농장">건설</button></div>
+                        <div class="build-option"><span>🐟 어장(1티어) - 바다 (나무50)</span><button class="build-btn" data-type="어장">건설</button></div>
+                        <div class="build-option"><span>🐖 돼지 농장(1티어) - 평원 (나무50)</span><button class="build-btn" data-type="돼지 농장">건설</button></div>
+                        <div class="build-option"><span>🪓 벌목장(1티어) - 숲 (나무100)</span><button class="build-btn" data-type="벌목장(1티어)">건설</button></div>
+                        <div class="build-option"><span>⛏️ 광산(1티어) - 산 (나무50, 돌50)</span><button class="build-btn" data-type="광산(1티어)">건설</button></div>
+                        <div class="build-option"><span>🏺 도예공방(1티어) (나무50, 벽돌20)</span><button class="build-btn" data-type="도예공방(1티어)">건설</button></div>
+                        <div class="build-option"><span>🗿 제사단(1티어) (돌100)</span><button class="build-btn" data-type="제사단(1티어)">건설</button></div>
+                        <div class="build-option"><span>🏹 망루(1티어) - 방어 (나무100)</span><button class="build-btn" data-type="망루(1티어)">건설</button></div>
+                        <div class="build-option"><span>🛡️ 성벽(1티어) - 방어 (나무200)</span><button class="build-btn" data-type="성벽(1티어)">건설</button></div>
+                        <hr>
+                        <div style="font-weight: bold; color: #fbbf24;">병영 (고대)</div>
+                        <div class="build-option"><span>🗡️ 원시전사 (식량50)</span><button class="build-btn" data-type="원시전사">징집</button></div>
+                        <div class="build-option"><span>🔱 투창병 (식량50, 나무20)</span><button class="build-btn" data-type="투창병">징집</button></div>
+                    </div>
+
+                    <div id="era-중세-buildings" class="era-group hidden">
+                        <h3 style="color:#60a5fa; border-bottom:1px solid #60a5fa; padding-bottom:5px; margin-top:20px;">[중세] 중급 시설</h3>
+                        <div class="build-option"><span>🏠 주택(2티어) (나무100, 돌50)</span><button class="build-btn" data-type="주택(2티어)">건설</button></div>
+                        <div class="build-option"><span>🌾 쌀 농장(2티어) - 평원 (나무100, 철50)</span><button class="build-btn" data-type="쌀 농장">건설</button></div>
+                        <div class="build-option"><span>🍎 과수원(2티어) - 숲 (나무100, 철50)</span><button class="build-btn" data-type="과수원">건설</button></div>
+                        <div class="build-option"><span>🐄 소 목장(2티어) - 평원 (나무100, 돌50)</span><button class="build-btn" data-type="소 목장">건설</button></div>
+                        <div class="build-option"><span>🐔 양계장(2티어) - 평원 (나무100)</span><button class="build-btn" data-type="양계장">건설</button></div>
+                        <div class="build-option"><span>🪓 벌목장(2티어) - 숲 (나무150, 철50)</span><button class="build-btn" data-type="벌목장(2티어)">건설</button></div>
+                        <div class="build-option"><span>⛏️ 광산(2티어) - 산 (나무100, 돌100, 철50)</span><button class="build-btn" data-type="광산(2티어)">건설</button></div>
+                        <div class="build-option"><span>🪞 유리공방(2티어) (돌200, 유리50)</span><button class="build-btn" data-type="유리공방(2티어)">건설</button></div>
+                        <div class="build-option"><span>⚒️ 대장간(2티어) (나무100, 철100)</span><button class="build-btn" data-type="대장간(2티어)">건설</button></div>
+                        <div class="build-option"><span>🧪 연금술사의탑(2티어) (돌200, 금50)</span><button class="build-btn" data-type="연금술사의탑(2티어)">건설</button></div>
+                        <div class="build-option"><span>⚖️ 시장(2티어) (나무200, 금100)</span><button class="build-btn" data-type="시장(2티어)">건설</button></div>
+                        <div class="build-option"><span>🔬 연구소(2티어) (돌300, 금200, 철100)<br><small>필요: 철기제련</small></span><button class="build-btn" data-type="연구소(2티어)">건설</button></div>
+                        <div class="build-option"><span>🏰 성(2티어) - 방어 (나무300, 돌500)</span><button class="build-btn" data-type="성(2티어)">건설</button></div>
+                        <hr>
+                        <div style="font-weight: bold; color: #60a5fa;">병영 (중세)</div>
+                        <div class="build-option"><span>🗡️ 기사 (식량100, 철50, 금50)</span><button class="build-btn" data-type="기사">징집</button></div>
+                        <div class="build-option"><span>🏹 장궁병 (식량80, 나무100, 금30)</span><button class="build-btn" data-type="장궁병">징집</button></div>
+                        <div class="build-option"><span>☄️ 투석기 (나무200, 돌100, 금50)</span><button class="build-btn" data-type="투석기">징집</button></div>
+                    </div>
+
+                    <div id="era-근대-buildings" class="era-group hidden">
+                        <h3 style="color:#c084fc; border-bottom:1px solid #c084fc; padding-bottom:5px; margin-top:20px;">[근대] 고급 시설</h3>
+                        <div class="build-option"><span>🏠 주택(3티어) (갈은돌100, 은50)</span><button class="build-btn" data-type="주택(3티어)">건설</button></div>
+                        <div class="build-option"><span>🌽 옥수수 농장(3티어) - 평원 (철100, 물100)</span><button class="build-btn" data-type="옥수수 농장">건설</button></div>
+                        <div class="build-option"><span>🥔 감자 농장(3티어) - 평원 (철100, 물100)</span><button class="build-btn" data-type="감자 농장">건설</button></div>
+                        <div class="build-option"><span>🪓 벌목장(3티어) - 숲 (철100, 구리50)</span><button class="build-btn" data-type="벌목장(3티어)">건설</button></div>
+                        <div class="build-option"><span>⛏️ 광산(3티어) - 산 (철200, 미네랄50)</span><button class="build-btn" data-type="광산(3티어)">건설</button></div>
+                        <div class="build-option"><span>🏭 공장(3티어) (철300, 구리100, 금100)</span><button class="build-btn" data-type="공장(3티어)">건설</button></div>
+                        <div class="build-option"><span>💥 화약공장(3티어) (철200, 화약100)</span><button class="build-btn" data-type="화약공장(3티어)">건설</button></div>
+                        <div class="build-option"><span>🚂 증기기관차역(3티어) (철400, 석탄200)</span><button class="build-btn" data-type="증기기관차역(3티어)">건설</button></div>
+                        <div class="build-option"><span>🏦 은행(3티어) (갈은돌200, 금300)</span><button class="build-btn" data-type="은행(3티어)">건설</button></div>
+                        <div class="build-option"><span>🏥 병원(3티어) (갈은돌200, 물200, 은100)</span><button class="build-btn" data-type="병원(3티어)">건설</button></div>
+                        <div class="build-option"><span>🏰 요새(3티어) - 방어 (갈은돌300, 철200)</span><button class="build-btn" data-type="요새(3티어)">건설</button></div>
+                        <hr>
+                        <div style="font-weight: bold; color: #c084fc;">병영 (근대)</div>
+                        <div class="build-option"><span>🔫 머스킷병 (식량100, 철100, 구리50)</span><button class="build-btn" data-type="머스킷병">징집</button></div>
+                        <div class="build-option"><span>💣 대포 (철300, 미네랄100, 금100)</span><button class="build-btn" data-type="대포">징집</button></div>
+                    </div>
+
+                    <div id="era-현대-buildings" class="era-group hidden">
+                        <h3 style="color:#f472b6; border-bottom:1px solid #f472b6; padding-bottom:5px; margin-top:20px;">[현대] 첨단 시설</h3>
+                        <div class="build-option"><span>🏠 주택(4티어) (갈은돌200, 금100, 미네랄50)</span><button class="build-btn" data-type="주택(4티어)">건설</button></div>
+                        <div class="build-option"><span>🌾 농장(4티어) - 평원 (철200, 구리100, 물200)</span><button class="build-btn" data-type="농장(4티어)">건설</button></div>
+                        <div class="build-option"><span>🏭 공장(4티어) (은100, 미네랄200, 금200)</span><button class="build-btn" data-type="공장(4티어)">건설</button></div>
+                        <div class="build-option"><span>⛏️ 광산(4티어) - 산 (갈은돌200, 은100, 미네랄100)</span><button class="build-btn" data-type="광산(4티어)">건설</button></div>
+                        <div class="build-option"><span>🛢️ 정유소(4티어) (철300, 석유200)</span><button class="build-btn" data-type="정유소(4티어)">건설</button></div>
+                        <div class="build-option"><span>⚡ 발전소(4티어) (강철200, 석탄300)</span><button class="build-btn" data-type="발전소(4티어)">건설</button></div>
+                        <div class="build-option"><span>📡 방송국(4티어) (강철100, 구리200)</span><button class="build-btn" data-type="방송국(4티어)">건설</button></div>
+                        <div class="build-option"><span>🛡️ 군사기지(4티어) - 방어 (철500, 구리300, 은200)</span><button class="build-btn" data-type="군사기지(4티어)">건설</button></div>
+                        <div class="build-option"><span>⚓ 함포(4티어) (강철400, 화약200)<br><small>필요: 해군기술</small></span><button class="build-btn" data-type="함포(4티어)">건설</button></div>
+                        <hr>
+                        <div style="font-weight: bold; color: #f472b6;">병영 (현대)</div>
+                        <div class="build-option"><span>🔫 소총수 (식량200, 구리100, 미네랄50)</span><button class="build-btn" data-type="소총수">징집</button></div>
+                        <div class="build-option"><span>🚜 탱크 (철500, 은100, 금300)</span><button class="build-btn" data-type="탱크">징집</button></div>
+                        <div class="build-option"><span>🚁 헬기 (철300, 미네랄300, 금500)</span><button class="build-btn" data-type="헬기">징집</button></div>
+                        <div class="build-option"><span>✈️ 비행기 (강철200, 가솔린100, 부품50)<br><small>필요: 항공기술</small></span><button class="build-btn" data-type="비행기">징집</button></div>
+                        <div class="build-option"><span>🚢 항공모함 (강철800, 석유500, 부품200)<br><small>필요: 해군기술</small></span><button class="build-btn" data-type="항공모함">징집</button></div>
+                    </div>
+                    
+                    <div id="era-미래-buildings" class="era-group hidden">
+                        <h3 style="color:#38bdf8; border-bottom:1px solid #38bdf8; padding-bottom:5px; margin-top:20px;">[미래] 초월 시설</h3>
+                        <div class="build-option"><span>🏠 주택(5티어) (플라스틱100, 반도체50)</span><button class="build-btn" data-type="주택(5티어)">건설</button></div>
+                        <div class="build-option"><span>🚀 우주공항(5티어) (합금500, 부품300, 코어50)</span><button class="build-btn" data-type="우주공항(5티어)">건설</button></div>
+                        <div class="build-option"><span>☢️ 반물질반응로(5티어) (코어200, AI칩100, 은500)</span><button class="build-btn" data-type="반물질반응로(5티어)">건설</button></div>
+                        <div class="build-option"><span>🛡️ 보호막발생기(5티어) (합금300, 코어100, AI칩50)</span><button class="build-btn" data-type="보호막발생기(5티어)">건설</button></div>
+                        <hr>
+                        <div style="font-weight: bold; color: #38bdf8;">병영 (미래)</div>
+                        <div class="build-option"><span>🦾 강화외골격병 (식량300, 플라스틱50, 반도체50)</span><button class="build-btn" data-type="강화외골격병">징집</button></div>
+                        <div class="build-option"><span>⚡ 플라즈마전차 (합금300, 코어50, 부품100)</span><button class="build-btn" data-type="플라즈마전차">징집</button></div>
+                        <div class="build-option"><span>🤖 전투로봇 (AI칩50, 합금200, 코어100)</span><button class="build-btn" data-type="전투로봇">징집</button></div>
+                        <div class="build-option"><span>🛸 우주전함 (복합소재500, 워프드라이브50, AI칩100)<br><small>필요: 우주기술</small></span><button class="build-btn" data-type="우주전함">징집</button></div>
+                        <div class="build-option"><span>🪐 행성파괴함 (복합소재1000, 반물질200, 워프드라이브200)</span><button class="build-btn" data-type="행성파괴함">징집</button></div>
+                        <div class="build-option"><span>🌌 우주항공모함 (합금1500, 코어500, 우주전투기300)</span><button class="build-btn" data-type="우주항공모함">징집</button></div>
+                    </div>
+                </div>
+
+                <!-- 기술 탭 -->
+                <div id="tab-tech" class="tab-pane hidden">
+                    <h3 style="color:#10b981; border-bottom:1px solid #10b981; padding-bottom:5px;">연구 트리</h3>
+                    <div class="build-option"><span>🌱 관개 기술 (금100, 나무100)<br><small>식량 생산 영구 증가</small></span><button class="tech-btn" data-tech="tech_irrigation">연구</button></div>
+                    <div class="build-option"><span>⚒️ 철기 제련 (금200, 돌200)<br><small>연구소 건설 및 철 생산 증가</small></span><button class="tech-btn" data-tech="tech_iron_smelting">연구</button></div>
+                    <div class="build-option"><span>💥 화약 발명 (금500, 석탄200)<br><small>화약 관련 무기/시설 해금</small></span><button class="tech-btn" data-tech="tech_gunpowder">연구</button></div>
+                    <div class="build-option"><span>⚙️ 조립 라인 (금1000, 강철200)<br><small>모든 공장 생산속도 대폭 증가</small></span><button class="tech-btn" data-tech="tech_assembly_line">연구</button></div>
+                    <div class="build-option"><span>✈️ 항공 기술 (금2000, 합금100, 가솔린50)<br><small>비행기 등 항공 유닛 해금</small></span><button class="tech-btn" data-tech="tech_flight">연구</button></div>
+                    <div class="build-option"><span>🚢 해군 기술 (금2000, 강철300, 석유100)<br><small>항공모함, 함포 해금</small></span><button class="tech-btn" data-tech="tech_naval">연구</button></div>
+                    <div class="build-option"><span>🧠 인공지능 (금3000, AI칩100)<br><small>미래 기술 해금</small></span><button class="tech-btn" data-tech="tech_ai">연구</button></div>
+                    <div class="build-option"><span>🚀 우주 기술 (금5000, 에너지코어50, AI칩100)<br><small>우주전함 및 우주공항 해금</small></span><button class="tech-btn" data-tech="tech_space">연구</button></div>
+                    <div class="build-option"><span>🌌 암흑물질 연구 (금10000, 암흑물질100, 에너지코어200)<br><small>초월적 궁극 기술 해금</small></span><button class="tech-btn" data-tech="tech_dark_matter">연구</button></div>
+                </div>
+
+                <!-- 외교 탭 -->
+                <div id="tab-diplomacy" class="tab-pane hidden">
+                    <div id="diplomacy-list" style="display:flex; flex-direction:column; gap:8px; max-height:380px; overflow-y:auto; margin-top:10px;">
+                        <div style="color:#94a3b8; font-size:0.85rem;">로딩 중...</div>
+                    </div>
+                </div>
+
+                <!-- 군사 탭 -->
+                <div id="tab-military" class="tab-pane hidden">
+                    <div class="info-text">배치된 군대가 없습니다.</div>
+                    <button class="action-btn">부대 편성</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Action Bar -->
+        <div id="bottom-bar">
+            <div class="log-window" id="event-log">
+                <div class="log-entry">세계가 생성되었습니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}?v={{ range(10001, 20000) | random }}"></script>
+</body>
+</html>

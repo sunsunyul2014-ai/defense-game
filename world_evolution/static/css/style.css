@@ -1,0 +1,307 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    overflow: hidden;
+    background-color: #000;
+    font-family: 'Inter', sans-serif;
+    color: #e0e0e0;
+}
+
+#game-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+/* Event Splash Screen */
+#event-splash {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    border-radius: 12px;
+    padding: 40px 80px;
+    text-align: center;
+    color: #fff;
+    z-index: 1000;
+    pointer-events: none;
+    transition: opacity 0.5s, transform 0.5s;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.2);
+}
+
+#event-splash.hidden {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+}
+
+#event-splash h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 48px;
+    color: #fbbf24;
+    margin-bottom: 10px;
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;
+    pointer-events: none; /* Let clicks pass through to 3D canvas */
+}
+
+/* UI Elements need pointer events */
+#top-bar, .panel, #bottom-bar {
+    pointer-events: auto;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+    background: rgba(10, 15, 25, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+/* Top Bar */
+#top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    background: linear-gradient(180deg, rgba(15,20,30,0.95) 0%, rgba(15,20,30,0.4) 100%);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.resource {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #d1d5db;
+}
+
+.resource span {
+    color: #fff;
+    font-family: monospace;
+    font-size: 15px;
+}
+
+.time-display {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* Panels */
+.panel {
+    background: rgba(15, 20, 25, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+#left-panel {
+    position: absolute;
+    top: 70px;
+    left: 20px;
+    width: 300px;
+    height: calc(100vh - 160px);
+}
+
+#info-title {
+    font-family: 'Cinzel', serif;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+#info-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #9ca3af;
+}
+
+#right-panel {
+    position: absolute;
+    top: 70px;
+    right: 20px;
+    width: 300px;
+    height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
+}
+
+#menu-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.menu-btn {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #9ca3af;
+    padding: 10px 5px;
+    cursor: pointer;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.menu-btn:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.menu-btn.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(37, 99, 235, 0.6));
+    border-color: rgba(96, 165, 250, 0.8);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+#menu-content {
+    flex: 1;
+    overflow-y: auto;
+    /* Custom Scrollbar for sleek look */
+}
+
+#menu-content::-webkit-scrollbar {
+    width: 6px;
+}
+#menu-content::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+}
+
+.tab-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tab-pane.hidden {
+    display: none;
+}
+
+.info-text {
+    font-size: 13px;
+    color: #9ca3af;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.action-btn {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.9));
+    color: white;
+    border: 1px solid rgba(96, 165, 250, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.4);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 1), rgba(37, 99, 235, 1));
+}
+
+.build-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+}
+.build-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.build-option span {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.build-option button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.build-option button:hover {
+    background: #3b82f6;
+}
+
+/* Bottom Bar */
+#bottom-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 100px;
+}
+
+.log-window {
+    background: rgba(10, 10, 15, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    width: 100%;
+    height: 100%;
+    padding: 10px 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.log-entry {
+    font-size: 13px;
+    color: #d1d5db;
+    margin-top: 4px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
