@@ -186,6 +186,20 @@
         </div>
     </div>
 
+    <!-- 날씨 UI -->
+    <div id="weather-ui" style="position: absolute; top: 20px; right: 20px; background: rgba(15,23,42,0.8); border: 2px solid #334155; padding: 15px; border-radius: 10px; color: white; display: flex; flex-direction: column; gap: 10px; z-index: 10; pointer-events: none; min-width: 150px;">
+        <div style="font-weight: bold; font-size: 1.1rem; text-align: center; margin-bottom: 5px; color: white;">현재 날씨</div>
+        <div style="display: flex; justify-content: space-between; gap: 20px; color: #facc15;">
+            <span>☀️ 쾌청</span>
+            <span id="weather-sun-val" style="font-weight: bold;">0</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 20px; color: #60a5fa;">
+            <span>🌧️ 잔비</span>
+            <span id="weather-rain-val" style="font-weight: bold;">0</span>
+        </div>
+        <div id="weather-status" style="margin-top: 10px; font-size: 0.8rem; text-align: center; color: #94a3b8;">맑음 (효과 없음)</div>
+    </div>
+
     <div id="game-container">
         <div id="ui-panel" style="height: calc(100vh - 60px); display: flex; flex-direction: column; overflow: hidden; padding-right: 5px;">
             <h1>Poke Defense</h1>
@@ -277,6 +291,22 @@
                 <button class="tower-btn" data-type="rowlet">
                     <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/722.png" class="btn-sprite">
                     나몰빼미 (50)
+                </button>
+                <button class="tower-btn" data-type="vulpix">
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/37.png" class="btn-sprite">
+                    식스테일 (150)
+                </button>
+                <button class="tower-btn" data-type="torkoal">
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/324.png" class="btn-sprite">
+                    코터스 (300)
+                </button>
+                <button class="tower-btn" data-type="wingull">
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/278.png" class="btn-sprite">
+                    갈모매 (150)
+                </button>
+                <button class="tower-btn" data-type="poliwag">
+                    <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/60.png" class="btn-sprite">
+                    발챙이 (150)
                 </button>
 
                 <button id="btn-build-typenull" class="tower-btn" data-type="type_null" style="display: none; background: linear-gradient(135deg, #a855f7, #6b21a8); border-color: #a855f7;">

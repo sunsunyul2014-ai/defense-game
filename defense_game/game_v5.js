@@ -37,7 +37,7 @@ const POKEMON_DATA = {
     'charmeleon': { name: '리자드', spriteId: 5, cost: 0, range: 160, damage: 45, cooldown: 35, type: 'single', color: '#dc2626', desc: '성격이 제법 포악해졌습니다. 앗 뜨거! (단일 공격 + 10% 확률 화상)', burnChance: 0.1, evolveLvl: 15, evolveCost: 300, evolveTo: 'charizard', attackStyle: 'fire' },
     'charizard': { name: '리자몽', spriteId: 6, cost: 0, range: 180, damage: 120, cooldown: 35, type: 'aoe', aoeRange: 80, color: '#b91c1c', desc: '지구던지기 마렵다... 모든 걸 태워버리는 (광역 폭발 공격 + 10% 화상)', burnChance: 0.1, attackStyle: 'fire', itemEvolutions: { 'mega_stone_x': 'mega_charizard_x', 'mega_stone_y': 'mega_charizard_y' } },
     'mega_charizard_x': { name: '메가리자몽X', spriteId: 10034, cost: 0, range: 80, damage: 250, cooldown: 30, type: 'aoe', aoeRange: 80, color: '#1e3a8a', desc: '강력한 드래곤의 힘! (초근접 광역 타격 + 15% 혼란)', confuseChance: 0.15, attackStyle: 'fire' },
-    'mega_charizard_y': { name: '메가리자몽Y', spriteId: 10035, cost: 0, range: 220, damage: 200, cooldown: 35, type: 'aoe', aoeRange: 120, color: '#f59e0b', desc: '가뭄 특성 발동! (초광역 폭발 공격 + 30% 화상)', burnChance: 0.3, attackStyle: 'fire' },
+    'mega_charizard_y': { name: '메가리자몽Y', spriteId: 10035, cost: 0, range: 250, damage: 300, cooldown: 35, type: 'aoe', aoeRange: 120, color: '#ef4444', desc: '쾌청 요원! (쾌청 + 2). 강렬한 태양 아래서 범위/사거리 폭증 (화상 20%)', burnChance: 0.2, attackStyle: 'fire', weatherSun: 2 },
 
     'mega_venusaur': { name: '메가이상해꽃', spriteId: 10033, cost: 0, range: 250, damage: 85, cooldown: 25, type: 'aoe', aoeRange: 150, poisonChance: 0.6, color: '#16a34a', desc: '더 넓은 범위와 강한 맹독! 2연속 발사.', multiHit: 2, multiHitDelay: 10, attackStyle: 'seed' },
     'mega_blastoise': { name: '메가거북왕', spriteId: 10036, cost: 0, range: 250, damage: 200, cooldown: 120, type: 'spread', spreadCount: 1, pierceCount: 9999, flyEnd: true, projScale: 2.5, slowFactor: 0.4, slowDur: 120, color: '#3b82f6', desc: '맵 끝까지 날아가는 두꺼운 관통 물대포. 명중 시 둔화.', attackStyle: 'water' },
@@ -103,6 +103,16 @@ const POKEMON_DATA = {
     'dartrix': { name: '빼미스로우', spriteId: 723, cost: 0, range: 180, damage: 5, cooldown: 50, type: 'spread', spreadCount: 5, color: '#16a34a', desc: '앞머리를 신경 쓰는 멋쟁이. (공속/딜/사거리 증가 + 5% 밀치기)', knockbackChance: 0.05, evolveLvl: 15, evolveCost: 300, evolveTo: 'decidueye', attackStyle: 'leaf' },
     'decidueye': { name: '모크나이퍼', spriteId: 724, cost: 0, range: 220, damage: 8, cooldown: 50, type: 'spread', spreadCount: 7, color: '#15803d', desc: '그림자 꿰매기! (7연발 관통 깃털 + 적 회복 봉인)', healBlock: true, debuffDur: 200, attackStyle: 'leaf' },
 
+    'vulpix': { name: '식스테일', spriteId: 37, cost: 150, range: 100, damage: 8, cooldown: 55, type: 'aoe', aoeRange: 50, color: '#f97316', desc: '귀여운 불여우. 작은 범위의 불꽃을 쏩니다.', evolveLvl: 0, evolveCost: 0, itemEvolutions: { 'fire_stone': 'ninetales' }, attackStyle: 'fire' },
+    'ninetales': { name: '나인테일', spriteId: 38, cost: 0, range: 140, damage: 25, cooldown: 50, type: 'aoe', aoeRange: 80, color: '#ea580c', desc: '쾌청 요원! (쾌청 + 1). 전체적인 능력치가 우수합니다.', attackStyle: 'fire', weatherSun: 1 },
+    'torkoal': { name: '코터스', spriteId: 324, cost: 300, range: 130, damage: 80, cooldown: 120, type: 'aoe', aoeRange: 130, color: '#dc2626', desc: '쾌청 요원! (쾌청 + 1). 느리지만 강력한 전방위 불꽃을 뿜습니다.', attackStyle: 'fire', weatherSun: 1 },
+    'wingull': { name: '갈모매', spriteId: 278, cost: 150, range: 120, damage: 5, cooldown: 45, type: 'pierce', pierceCount: 3, color: '#38bdf8', desc: '물대포를 날려 적을 관통하고 둔화시킵니다.', attackStyle: 'water', slowFactor: 0.8, slowDur: 60, evolveLvl: 10, evolveTo: 'pelipper' },
+    'pelipper': { name: '패리퍼', spriteId: 279, cost: 0, range: 150, damage: 15, cooldown: 45, type: 'pierce', pierceCount: 5, color: '#0ea5e9', desc: '잔비 요원! (잔비 + 1). 더 길고 강한 둔화를 겁니다.', attackStyle: 'water', slowFactor: 0.7, slowDur: 120, weatherRain: 1 },
+    'poliwag': { name: '발챙이', spriteId: 60, cost: 150, range: 110, damage: 4, cooldown: 60, type: 'aoe', aoeRange: 70, color: '#60a5fa', desc: '넓은 범위의 물타입 공격을 합니다.', evolveLvl: 8, evolveTo: 'poliwhirl', attackStyle: 'water' },
+    'poliwhirl': { name: '슈륙챙이', spriteId: 61, cost: 0, range: 130, damage: 12, cooldown: 45, type: 'aoe', aoeRange: 90, color: '#3b82f6', desc: '더 넓은 범위와 빠른 속도로 물을 뿌립니다.', itemEvolutions: { 'water_stone': 'poliwrath', 'kings_rock': 'politoed' }, attackStyle: 'water' },
+    'poliwrath': { name: '강챙이', spriteId: 62, cost: 0, range: 80, damage: 20, cooldown: 40, type: 'aoe', aoeRange: 60, color: '#1d4ed8', desc: '근접해서 엄청난 속도로 주먹을 날립니다! 공격할 때마다 공속이 빨라집니다.', attackStyle: 'water', atkSpeedStack: true },
+    'politoed': { name: '왕구리', spriteId: 186, cost: 0, range: 140, damage: 30, cooldown: 40, type: 'aoe', aoeRange: 100, color: '#22c55e', desc: '잔비 요원! (잔비 + 1). 적을 5% 확률로 기절시킵니다.', attackStyle: 'water', weatherRain: 1, stunChance: 0.05, stunDur: 120 },
+    
     'type_null': { name: '타입:널', spriteId: 772, cost: 0, range: 100, damage: 150, cooldown: 10, type: 'single', color: '#9ca3af', desc: '빠르고 강력한 근접 단일 딜 (스턴 및 상태이상 면역)', immuneToDebuffs: true, evolveLvl: 15, evolveCost: 0, evolveTo: 'silvally', attackStyle: 'normal' },
     'silvally': { name: '실버디', spriteId: 773, cost: 0, range: 130, damage: 300, cooldown: 10, type: 'aoe', aoeRange: 80, color: '#d1d5db', desc: '더 강한 범위 딜 및 사거리 증가 (스턴 및 상태이상 면역)', immuneToDebuffs: true, attackStyle: 'normal' }
 };
@@ -123,7 +133,11 @@ const POKEMON_FAMILIES = {
     sigilyph: ['sigilyph'],
     litten: ['litten', 'torracat', 'incineroar'],
     popplio: ['popplio', 'brionne', 'primarina'],
-    rowlet: ['rowlet', 'dartrix', 'decidueye']
+    rowlet: ['rowlet', 'dartrix', 'decidueye'],
+    vulpix: ['vulpix', 'ninetales'],
+    torkoal: ['torkoal'],
+    wingull: ['wingull', 'pelipper'],
+    poliwag: ['poliwag', 'poliwhirl', 'poliwrath', 'politoed']
 };
 
 // NEW ENEMY TYPES
@@ -1205,6 +1219,31 @@ class Tower {
                 this.globalProjRangeMult = 1 + 0.15 * getR('proj');
                 this.globalSpreadAngleMult = 1 - 0.50 * getR('narrow');
                 break;
+            case 'vulpix':
+                this.damage = Math.floor(this.damage * (1 + 0.5 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.2 * getR('range')));
+                this.globalAoeMult = 1 + 0.3 * getR('aoe');
+                this.globalBurnChance = 0.05 * getR('burn');
+                break;
+            case 'torkoal':
+                this.damage = Math.floor(this.damage * (1 + 0.6 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.2 * getR('range')));
+                this.globalAoeMult = 1 + 0.25 * getR('aoe');
+                this.globalBurnChance = 0.08 * getR('burn');
+                break;
+            case 'wingull':
+                this.damage = Math.floor(this.damage * (1 + 0.5 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.2 * getR('range')));
+                this.cooldown = Math.floor(data.cooldown * (1 - 0.15 * getR('speed')));
+                this.globalDebuffMult = 1 + 0.5 * getR('debuff');
+                break;
+            case 'poliwag':
+                this.damage = Math.floor(this.damage * (1 + 0.4 * getR('damage')));
+                this.range = Math.floor(this.range * (1 + 0.2 * getR('range')));
+                this.cooldown = Math.floor(data.cooldown * (1 - 0.25 * getR('speed')));
+                this.globalAoeMult = 1 + 0.3 * getR('aoe');
+                this.globalStunChance = 0.05 * getR('stun');
+                break;
         }
     }
 
@@ -1541,6 +1580,15 @@ class Projectile {
         this.x = x; this.y = y; this.target = target; this.sourceTower = sourceTower;
         this.data = POKEMON_DATA[sourceTower.baseId];
         this.damage = sourceTower.damage * damageMult;
+        
+        if (window.activeWeather === 'rain') {
+            if (this.data.attackStyle === 'fire') this.damage *= 0.5;
+            if (this.data.attackStyle === 'water') this.damage *= (1 + window.weatherRainPower * 0.1);
+        } else if (window.activeWeather === 'sun') {
+            if (this.data.attackStyle === 'fire') this.damage *= (1 + window.weatherSunPower * 0.1);
+            if (this.data.attackStyle === 'water') this.damage *= 0.5;
+        }
+
         this.speed = 15; this.active = true; this.chainCount = 0; this.hitTargets = new Set();
         this.angle = 0;
         this.spin = 0; // for shuriken
@@ -1646,6 +1694,15 @@ class Projectile {
         let paralyzeChance = (this.data.paralyzeChance || 0) + (this.sourceTower.globalParalyzeChance || 0);
         let stunChance = this.sourceTower.globalStunChance || 0;
         let debuffMult = this.sourceTower.globalDebuffMult || 1;
+        
+        let stunDur = 0;
+        if (this.sourceTower.item === 'kings_rock' && Math.random() < 0.075) {
+            stunDur = 60;
+        }
+        if (this.data.stunChance && Math.random() < this.data.stunChance) {
+            stunDur = Math.max(stunDur, this.data.stunDur || 60);
+        }
+        if (stunDur > 0) enemy.status.stunTimer = Math.max(enemy.status.stunTimer || 0, stunDur);
         
         if (burnChance && Math.random() < burnChance) enemy.status.burnTimer = 300;
         if (poisonChance && Math.random() < poisonChance) enemy.status.poisonTimer = 300;
@@ -2017,6 +2074,31 @@ function animate() {
         if(POKEMON_DATA[towers[i].baseId].hasDamageAura) window.damageAuraTowers.push(towers[i]);
     }
 
+    let rain = 0; let sun = 0;
+    for (let t of towers) {
+        if (POKEMON_DATA[t.baseId].weatherSun) sun += POKEMON_DATA[t.baseId].weatherSun;
+        if (POKEMON_DATA[t.baseId].weatherRain) rain += POKEMON_DATA[t.baseId].weatherRain;
+    }
+    let active = 'none';
+    if (rain > 0 && sun === 0) active = 'rain';
+    if (sun > 0 && rain === 0) active = 'sun';
+    if (rain > 0 && sun > 0) {
+        if (rain > sun) active = 'rain';
+        else if (sun > rain) active = 'sun';
+    }
+    window.weatherRainPower = rain; window.weatherSunPower = sun; window.activeWeather = active;
+    
+    let uiSun = document.getElementById('weather-sun-val');
+    let uiRain = document.getElementById('weather-rain-val');
+    let uiStatus = document.getElementById('weather-status');
+    if (uiSun) uiSun.innerText = sun;
+    if (uiRain) uiRain.innerText = rain;
+    if (uiStatus) {
+        if (active === 'sun') { uiStatus.innerText = `쾌청 발동 중! (불 ${(1 + sun*0.1).toFixed(1)}배, 물 0.5배)`; uiStatus.style.color = '#facc15'; }
+        else if (active === 'rain') { uiStatus.innerText = `잔비 발동 중! (물 ${(1 + rain*0.1).toFixed(1)}배, 불 0.5배)`; uiStatus.style.color = '#60a5fa'; }
+        else { uiStatus.innerText = `맑음 (효과 없음)`; uiStatus.style.color = '#94a3b8'; }
+    }
+
     towers.forEach(t => { t.update(); t.draw(); });
 
     if (isWaveActive) {
@@ -2382,7 +2464,11 @@ const UPGRADE_DATA = {
     sigilyph: { title: '심보러', sprite: 561, stats: { damage: { name: '공격력', max: 10 } } },
     litten: { title: '냐오불류', sprite: 725, stats: { damage: { name: '공격력', max: 10 }, range: { name: '사거리', max: 10 }, aoe: { name: '위협 범위', max: 10 }, burn: { name: '화상 확률', max: 10 } } },
     popplio: { title: '누리공류', sprite: 728, stats: { range: { name: '사거리', max: 10 }, aoe: { name: '범위', max: 10 }, debuff: { name: '디버프 강도', max: 10 }, slow: { name: '둔화 강도', max: 10 } } },
-    rowlet: { title: '나몰빼미류', sprite: 722, stats: { range: { name: '사거리', max: 10 }, spread: { name: '깃털 개수', max: 10 }, proj: { name: '투사체 사거리', max: 10 }, narrow: { name: '각도 감소', max: 10 } } }
+    rowlet: { title: '나몰빼미류', sprite: 722, stats: { range: { name: '사거리', max: 10 }, spread: { name: '깃털 개수', max: 10 }, proj: { name: '투사체 사거리', max: 10 }, narrow: { name: '각도 감소', max: 10 } } },
+    vulpix: { title: '식스테일류', sprite: 37, stats: { damage: { name: '공격력', max: 10 }, aoe: { name: '범위', max: 10 }, range: { name: '사거리', max: 10 }, burn: { name: '화상 확률', max: 10 } } },
+    torkoal: { title: '코터스', sprite: 324, stats: { damage: { name: '공격력', max: 10 }, aoe: { name: '범위', max: 10 }, range: { name: '사거리', max: 10 }, burn: { name: '화상 확률', max: 10 } } },
+    wingull: { title: '갈모매류', sprite: 278, stats: { damage: { name: '공격력', max: 10 }, debuff: { name: '둔화 강도', max: 10 }, range: { name: '사거리', max: 10 }, speed: { name: '공격속도', max: 10 } } },
+    poliwag: { title: '발챙이류', sprite: 60, stats: { damage: { name: '공격력', max: 10 }, speed: { name: '공격속도', max: 10 }, aoe: { name: '범위', max: 10 }, stun: { name: '스턴 확률', max: 10 }, range: { name: '사거리', max: 10 } } }
 };
 
 let selectedSnorlaxFamily = 'charmander';
@@ -2556,6 +2642,7 @@ const SHOP_ITEM_POOL = [
     { id: 'life_orb', name: '생명의 구슬', desc: '공격력 1.2배 증가', price: 300, icon: '🔮' },
     { id: 'lum_berry', name: '리샘열매', desc: '상태이상 1회 즉시 해제 및 10초 면역', price: 200, icon: '🌿' },
     { id: 'choice_scarf', name: '구애스카프', desc: '공속 1.5배. 대상 변경 시 잠깐 딜레이', price: 300, icon: '🧣' },
+    { id: 'kings_rock', name: '왕의징표적', desc: '특정 포켓몬 진화 또는 장착 시 7.5% 확률로 1초 기절', price: 200, icon: '👑' },
     { id: 'keystone', name: '키스톤', desc: '메가 진화를 위한 신비한 돌 (1회 한정)', price: 500, icon: '🗝️' },
     { id: 'mega_stone_x', name: '메가리자몽X나이트', desc: '리자몽을 메가리자몽X로 진화 (키스톤 필요)', price: 400, icon: '🌑' },
     { id: 'mega_stone_y', name: '메가리자몽Y나이트', desc: '리자몽을 메가리자몽Y로 진화 (키스톤 필요)', price: 400, icon: '☀️' },
