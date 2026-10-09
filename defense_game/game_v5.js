@@ -2126,7 +2126,7 @@ btnStartWave.addEventListener('click', () => {
 let lastRenderedBerries = -1;
 let lastRenderedLives = -1;
 
-function animate() {
+function gameTick() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (berries !== lastRenderedBerries) {
         berriesEl.innerText = berries;
@@ -2236,8 +2236,7 @@ function animate() {
                         }
 
                         startNextRound();
-                        requestAnimationFrame(animate);
-                        return; // Prevent wave++ and frame rendering for this cycle
+                        return 'SKIP'; // Prevent wave++ and frame rendering for this cycle
                     } else {
                         if (currentUser) {
                             const users = loadUsers();
@@ -2248,7 +2247,7 @@ function animate() {
                         ctx.fillText('STAGE CLEAR!', canvas.width/2, canvas.height/2 - 20);
                         ctx.fillStyle = '#fff'; ctx.font = '20px Outfit';
                         ctx.fillText('모든 라운드를 완벽하게 클리어했습니다! 🎉', canvas.width/2, canvas.height/2 + 30);
-                        return; // Stop game loop on victory
+                        return 'STOP'; // Stop game loop on victory
                     }
                 }
                 
@@ -2291,10 +2290,47 @@ function animate() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#ef4444'; ctx.font = 'bold 50px Outfit'; ctx.textAlign = 'center';
         ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2 - 20);
-        return;
+        return 'STOP';
     }
 
-    requestAnimationFrame(animate);
+    return 'CONTINUE';
+}
+
+let gameSpeedMultiplier = 1;
+const btnSpeedToggle = document.getElementById('btn-speed-toggle');
+if (btnSpeedToggle) {
+    btnSpeedToggle.addEventListener('click', () => {
+        if (gameSpeedMultiplier === 1) {
+            gameSpeedMultiplier = 2;
+            btnSpeedToggle.innerText = '▶ 2배속';
+            btnSpeedToggle.style.background = '#ef4444';
+        } else if (gameSpeedMultiplier === 2) {
+            gameSpeedMultiplier = 4;
+            btnSpeedToggle.innerText = '▶ 4배속';
+            btnSpeedToggle.style.background = '#8b5cf6';
+        } else {
+            gameSpeedMultiplier = 1;
+            btnSpeedToggle.innerText = '▶ 1배속';
+            btnSpeedToggle.style.background = '#f59e0b';
+        }
+    });
+}
+
+function animate() {
+    let loopCount = Math.min(gameSpeedMultiplier, 4);
+    let keepGoing = true;
+    for (let i = 0; i < loopCount; i++) {
+        let res = gameTick();
+        if (res === 'STOP') {
+            keepGoing = false;
+            break;
+        } else if (res === 'SKIP') {
+            break;
+        }
+    }
+    if (keepGoing) {
+        requestAnimationFrame(animate);
+    }
 }
 
 // Tutorial System
