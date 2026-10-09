@@ -105,7 +105,7 @@ const POKEMON_DATA = {
 
     'vulpix': { name: '식스테일', spriteId: 37, cost: 150, range: 100, damage: 15, cooldown: 55, type: 'aoe', aoeRange: 50, color: '#f97316', desc: '귀여운 불여우. 작은 범위의 불꽃을 쏩니다.', evolveLvl: 0, evolveCost: 0, itemEvolutions: { 'fire_stone': 'ninetales' }, attackStyle: 'fire' },
     'ninetales': { name: '나인테일', spriteId: 38, cost: 0, range: 140, damage: 40, cooldown: 50, type: 'aoe', aoeRange: 80, color: '#ea580c', desc: '쾌청 요원! (쾌청 + 1). 전체적인 능력치가 우수합니다.', attackStyle: 'fire', weatherSun: 1 },
-    'torkoal': { name: '코터스', spriteId: 324, cost: 300, range: 130, damage: 80, cooldown: 120, type: 'aoe', aoeRange: 130, color: '#dc2626', desc: '쾌청 요원! (쾌청 + 1). 느리지만 강력한 전방위 불꽃을 뿜습니다.', attackStyle: 'fire', weatherSun: 1 },
+    'torkoal': { name: '코터스', spriteId: 324, cost: 300, range: 130, damage: 15, cooldown: 15, type: 'aura', auraRange: 130, color: '#dc2626', desc: '쾌청 지원! (쾌청 + 1). 전방위로 지속적인 불꽃을 뿜습니다.', attackStyle: 'fire', weatherSun: 1 },
     'wingull': { name: '갈모매', spriteId: 278, cost: 150, range: 120, damage: 10, cooldown: 45, type: 'spread', spreadCount: 1, pierceCount: 9999, color: '#38bdf8', desc: '물대포를 날려 경로상의 모든 적을 관통하고 둔화시킵니다.', attackStyle: 'water', slowFactor: 0.8, slowDur: 60, evolveLvl: 10, evolveTo: 'pelipper' },
     'pelipper': { name: '패리퍼', spriteId: 279, cost: 0, range: 150, damage: 25, cooldown: 45, type: 'spread', spreadCount: 1, pierceCount: 9999, color: '#0ea5e9', desc: '잔비 요원! (잔비 + 1). 더 길고 강한 둔화 물대포를 발사하여 모든 적을 관통합니다.', attackStyle: 'water', slowFactor: 0.7, slowDur: 120, weatherRain: 1 },
     'poliwag': { name: '발챙이', spriteId: 60, cost: 150, range: 110, damage: 12, cooldown: 60, type: 'aoe', aoeRange: 70, color: '#60a5fa', desc: '넓은 범위의 물타입 공격을 합니다.', evolveLvl: 8, evolveTo: 'poliwhirl', attackStyle: 'water' },
@@ -604,6 +604,10 @@ class Enemy {
         }
         
         this.hp -= amount;
+        
+        if (amount > 0 && !isDot) {
+            visualEffects.push(new TextEffect(this.x, this.y - 10, `${Math.floor(amount)}`, '#ffcfcf'));
+        }
         if (this.hp <= 0) {
             this.isDead = true;
             
@@ -3359,12 +3363,13 @@ function loadGame(saveData) {
         });
     }
     
-    // 렌더링 업데이트
+    // 인벤토리 등 UI 업데이트
     berriesEl.innerText = berries;
     livesEl.innerText = Math.ceil(Math.max(0, lives));
     waveEl.innerText = wave;
     renderInventory();
     renderShop();
+    initMap();
     renderBackgroundToOffscreen();
 }
 
