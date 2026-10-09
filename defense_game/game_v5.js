@@ -114,7 +114,10 @@ const POKEMON_DATA = {
     'politoed': { name: '왕구리', spriteId: 186, cost: 0, range: 140, damage: 60, cooldown: 40, type: 'aoe', aoeRange: 100, color: '#22c55e', desc: '잔비 요원! (잔비 + 1). 적을 5% 확률로 기절시킵니다.', attackStyle: 'water', weatherRain: 1, stunChance: 0.05, stunDur: 120 },
     
     'type_null': { name: '타입:널', spriteId: 772, cost: 0, range: 100, damage: 150, cooldown: 10, type: 'single', color: '#9ca3af', desc: '빠르고 강력한 근접 단일 딜 (스턴 및 상태이상 면역)', immuneToDebuffs: true, evolveLvl: 15, evolveCost: 0, evolveTo: 'silvally', attackStyle: 'normal' },
-    'silvally': { name: '실버디', spriteId: 773, cost: 0, range: 130, damage: 300, cooldown: 10, type: 'aoe', aoeRange: 80, color: '#d1d5db', desc: '더 강한 범위 딜 및 사거리 증가 (스턴 및 상태이상 면역)', immuneToDebuffs: true, attackStyle: 'normal' }
+    'silvally': { name: '실버디', spriteId: 773, cost: 0, range: 130, damage: 300, cooldown: 10, type: 'aoe', aoeRange: 80, color: '#d1d5db', desc: '더 강한 범위 딜 및 사거리 증가 (스턴 및 상태이상 면역)', immuneToDebuffs: true, attackStyle: 'normal' },
+    
+    'groudon': { name: '그란돈', spriteId: 383, cost: 0, range: 180, damage: 300, cooldown: 60, type: 'aoe', aoeRange: 150, color: '#dc2626', desc: '넓은 전방위 강력한 불타입 공격. (화상 20% / 쾌청 + 5)', attackStyle: 'fire', burnChance: 0.2, weatherSun: 5 },
+    'kyogre': { name: '가이오가', spriteId: 382, cost: 0, range: 250, damage: 400, cooldown: 80, type: 'spread', spreadCount: 1, pierceCount: 9999, projScale: 3, color: '#0ea5e9', desc: '초광범위 관통 물대포. (둔화 / 잔비 + 5)', attackStyle: 'water', slowFactor: 0.8, slowDur: 60, weatherRain: 5 }
 };
 
 // POKEMON FAMILIES (For Snorlax's Shop Upgrades)
@@ -432,7 +435,9 @@ let raidVirtualMaxHp = 0;
 let clearedRaidsThisRound = [];
 const raidBossData = {
     'type_null': { id: 'boss_type_null', name: '타입:널', spriteId: 772, hp: 6000, speed: 1.5, dmg: 30, reward: 0, skill: 'raidBossTypeNull', cost: 555 },
-    'zeraora': { id: 'boss_zeraora', name: '제라오라', spriteId: 807, hp: 5000, speed: 2.5, dmg: 30, reward: 0, skill: 'raidBossZeraora', cost: 600, immuneToDebuffs: true }
+    'zeraora': { id: 'boss_zeraora', name: '제라오라', spriteId: 807, hp: 5000, speed: 2.5, dmg: 30, reward: 0, skill: 'raidBossZeraora', cost: 600, immuneToDebuffs: true },
+    'groudon': { id: 'boss_groudon', name: '그란돈', spriteId: 383, hp: 15000, speed: 0.6, dmg: 100, reward: 0, skill: 'raidBossGroudon', cost: 1000, immuneToDebuffs: true, immuneToKnockback: true, waterResist: 0.5 },
+    'kyogre': { id: 'boss_kyogre', name: '가이오가', spriteId: 382, hp: 12000, speed: 0.7, dmg: 80, reward: 0, skill: 'raidBossKyogre', cost: 1000, immuneToDebuffs: true, immuneToKnockback: true, rangeDist: 250 }
 };
 const ROUND_MAPS = {
     1: {
@@ -565,6 +570,10 @@ class Enemy {
             amount *= this.status.defDownFactor;
         }
         
+        if (this.baseData.waterResist && attacker && POKEMON_DATA[attacker.baseId] && POKEMON_DATA[attacker.baseId].attackStyle === 'water') {
+            amount *= this.baseData.waterResist;
+        }
+        
         if (attacker && POKEMON_DATA[attacker.baseId] && POKEMON_DATA[attacker.baseId].healBlock) {
             this.status.healBlockTimer = POKEMON_DATA[attacker.baseId].debuffDur;
         }
@@ -612,6 +621,25 @@ class Enemy {
                 document.getElementById('btn-build-zeraora').style.display = 'flex';
                 renderBackgroundToOffscreen();
                 visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '레이드 클리어!', '#fcd34d'));
+                alert('제라오라 레이드 클리어! 제라오라가 아군으로 합류합니다!');
+            } else if (this.baseData && this.baseData.skill === 'raidBossGroudon') {
+                isRaidActive = false;
+                clearedRaidsThisRound.push('groudon');
+                window.groudonUnlocked = true;
+                document.getElementById('btn-build-groudon').style.display = 'flex';
+                renderBackgroundToOffscreen();
+                visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '레이드 클리어!', '#dc2626'));
+                alert('그란돈 레이드 클리어! 그란돈이 아군으로 합류합니다!');
+            } else if (this.baseData && this.baseData.skill === 'raidBossKyogre') {
+                isRaidActive = false;
+                clearedRaidsThisRound.push('kyogre');
+                window.kyogreUnlocked = true;
+                document.getElementById('btn-build-kyogre').style.display = 'flex';
+                renderBackgroundToOffscreen();
+                visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '레이드 클리어!', '#0ea5e9'));
+                alert('가이오가 레이드 클리어! 가이오가가 아군으로 합류합니다!');
+                renderBackgroundToOffscreen();
+                visualEffects.push(new TextEffect(canvas.width/2, canvas.height/2, '레이드 클리어!', '#fcd34d'));
                 alert('전설 레이드 클리어! 제라오라가 아군으로 합류합니다.');
             } else {
                 berries += this.reward;
@@ -635,7 +663,7 @@ class Enemy {
     }
 
     applyKnockback(distance) {
-        if (this.baseData.id === 'rhyperior' || this.baseData.id === 'snorlax') return; // 보스는 넉백 면역
+        if (this.baseData.id === 'rhyperior' || this.baseData.id === 'snorlax' || this.baseData.immuneToKnockback) return; // 보스는 넉백 면역
         
         let remDist = distance;
         while (remDist > 0) {
@@ -977,6 +1005,44 @@ class Enemy {
                 }
             });
         }
+        
+        if (this.skill === 'raidBossGroudon' && frame % 300 === 0) { // 가끔(5초마다) 전방위 스턴 3초
+            visualEffects.push(new BubbleEffect(this.x, this.y, '#dc2626', 150));
+            towers.forEach(t => {
+                if (t.immuneTimer <= 0 && !POKEMON_DATA[t.baseId].immuneToDebuffs) {
+                    t.stunTimer = Math.max(t.stunTimer, 180); // 3초 스턴
+                    visualEffects.push(new TextEffect(t.x, t.y - 20, '스턴!', '#dc2626'));
+                }
+            });
+        }
+        
+        if (this.skill === 'raidBossKyogre') {
+            if (frame % 240 === 0) { // 가끔(4초마다) 타워 얼음
+                visualEffects.push(new BubbleEffect(this.x, this.y, '#38bdf8', 150));
+                towers.forEach(t => {
+                    if (Math.random() < 0.5) { // 무작위로 절반 정도
+                        if (t.immuneTimer <= 0 && !POKEMON_DATA[t.baseId].immuneToDebuffs) {
+                            t.stunTimer = Math.max(t.stunTimer, 120); // 2초 얼음
+                            visualEffects.push(new TextEffect(t.x, t.y - 20, '얼음!', '#38bdf8'));
+                        }
+                    }
+                });
+            }
+            // 사정거리에 들어오면 멈추지 않고 공격
+            if (distToBaseSq <= rangeDist * rangeDist) {
+                this.skillTimer++;
+                if (this.skillTimer >= 60) {
+                    this.skillTimer = 0;
+                    let finalDamage = this.damage;
+                    if (finalDamage > 0) {
+                        if (this.status.atkDownTimer > 0) finalDamage = Math.max(1, Math.floor(finalDamage * this.status.atkDownFactor));
+                    }
+                    lives -= finalDamage;
+                    visualEffects.push(new LineEffect(this.x, this.y, BASE_X, BASE_Y, '#0ea5e9'));
+                    visualEffects.push(new TextEffect(BASE_X, BASE_Y - 20, `-${finalDamage}`, '#ef4444'));
+                }
+            }
+        }
 
         const target = waypoints[this.pathIndex + 1];
         if (!target) return;
@@ -995,7 +1061,7 @@ class Enemy {
             this.progress = this.pathIndex * 1000;
             if (this.pathIndex >= waypoints.length - 1) {
                 // Reached Base
-                if (this.baseData && (this.baseData.skill === 'raidBossTypeNull' || this.baseData.skill === 'raidBossZeraora')) {
+                if (this.baseData && (this.baseData.skill === 'raidBossTypeNull' || this.baseData.skill === 'raidBossZeraora' || this.baseData.skill === 'raidBossGroudon' || this.baseData.skill === 'raidBossKyogre')) {
                     this.x = waypoints[0].x;
                     this.y = waypoints[0].y;
                     this.pathIndex = 0;
@@ -2027,6 +2093,18 @@ canvas.addEventListener('click', (e) => {
             selectedBuildType = 'charmander';
             document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('active'));
         }
+        if (typeToPlace === 'groudon') {
+            const btn = document.getElementById('btn-build-groudon');
+            if (btn) btn.style.display = 'none';
+            selectedBuildType = 'charmander';
+            document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('active'));
+        }
+        if (typeToPlace === 'kyogre') {
+            const btn = document.getElementById('btn-build-kyogre');
+            if (btn) btn.style.display = 'none';
+            selectedBuildType = 'charmander';
+            document.querySelectorAll('.tower-btn').forEach(b => b.classList.remove('active'));
+        }
         
         if (tutStep === 1) nextTutorial();
     } else if (!isPath && berries < cost) {
@@ -2883,6 +2961,20 @@ const availableRaids = [
         sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/807.png',
         cost: 600,
         desc: '초고속 이동과 주변을 마비시키는 능력! 처치 시 아군으로 합류합니다.'
+    },
+    {
+        id: 'groudon',
+        name: '그란돈',
+        sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/383.png',
+        cost: 1000,
+        desc: '물 속성 반감, 모든 상태이상/밀치기 무효의 초전설 보스. 전방위 3초 스턴을 겁니다!'
+    },
+    {
+        id: 'kyogre',
+        name: '가이오가',
+        sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/382.png',
+        cost: 1000,
+        desc: '원거리 이동 공격, 모든 상태이상/밀치기 무효의 초전설 보스. 타워를 얼어붙게 합니다!'
     }
 ];
 
@@ -3163,6 +3255,8 @@ function serializeGameState() {
         towers: serializedTowers,
         clearedRaidsThisRound: [...clearedRaidsThisRound],
         zeraoraUnlocked: window.zeraoraUnlocked,
+        groudonUnlocked: window.groudonUnlocked,
+        kyogreUnlocked: window.kyogreUnlocked,
         tutStep: tutStep
     };
 }
@@ -3191,6 +3285,8 @@ function loadGame(saveData) {
     
     clearedRaidsThisRound = saveData.clearedRaidsThisRound || [];
     window.zeraoraUnlocked = saveData.zeraoraUnlocked || false;
+    window.groudonUnlocked = saveData.groudonUnlocked || false;
+    window.kyogreUnlocked = saveData.kyogreUnlocked || false;
     tutStep = saveData.tutStep || 0;
     
     // UI 업데이트 (레이드 버튼)
@@ -3200,6 +3296,14 @@ function loadGame(saveData) {
     }
     if (window.zeraoraUnlocked) {
         const btn = document.getElementById('btn-build-zeraora');
+        if (btn) btn.style.display = 'flex';
+    }
+    if (window.groudonUnlocked) {
+        const btn = document.getElementById('btn-build-groudon');
+        if (btn) btn.style.display = 'flex';
+    }
+    if (window.kyogreUnlocked) {
+        const btn = document.getElementById('btn-build-kyogre');
         if (btn) btn.style.display = 'flex';
     }
     
