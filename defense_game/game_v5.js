@@ -3319,7 +3319,7 @@ function loadGame(saveData) {
     berries = saveData.berries;
     lives = saveData.lives;
     wave = saveData.wave;
-    currentRound = saveData.currentRound;
+    currentRound = saveData.currentRound || 1;
     
     if (saveData.inventory) {
         inventory = { ...saveData.inventory };
