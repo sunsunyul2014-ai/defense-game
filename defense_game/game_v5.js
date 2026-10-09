@@ -1501,8 +1501,10 @@ class Tower {
                         let finalDamage = this.damage;
                         if (data.bonusDamageToParalyzed && (e.status.paralyzed || e.status.stunTimer > 0)) finalDamage *= data.bonusDamageToParalyzed;
                         e.applyDamage(finalDamage, false, false, this);
-                        e.status.slowFactor = data.slowFactor;
-                        e.status.slowTimer = data.slowDur;
+                        if (data.slowFactor) {
+                            e.status.slowFactor = data.slowFactor;
+                            e.status.slowTimer = data.slowDur;
+                        }
                         if (data.paralyzeChance && Math.random() < data.paralyzeChance) e.status.paralyzed = true;
                         hitAny = true;
                         if (visualEffects.length < 200) visualEffects.push(new BubbleEffect(e.x, e.y, data.color, 20));
