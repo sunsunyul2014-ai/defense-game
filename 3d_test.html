@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>3D 무기 연동 테스트</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a2e; color: white; font-family: sans-serif; }
+        #info { position: absolute; top: 10px; left: 10px; z-index: 100; max-width: 400px;}
+        .panel { background: rgba(0,0,0,0.6); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
+        button { padding: 8px 12px; margin: 3px; cursor: pointer; background: #3b82f6; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #2563eb; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        h3 { margin-top: 0; color: #fbbf24; }
+        #vfx-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: #ff3366; font-weight: bold; text-shadow: 0 0 10px #ff3366; opacity: 0; pointer-events: none; z-index: 200; transition: opacity 0.2s; }
+    </style>
+</head>
+<body>
+    <div id="vfx-text">EFFECT!</div>
+    <div id="info">
+        <div class="panel">
+            <h3>⚔️ 인벤토리</h3>
+            <p>현재 장착: <span id="current-weapon" style="color:#10b981; font-weight:bold;">장검</span></p>
+            <button onclick="equipWeapon('longsword', '장검')">장검 들기 (기본)</button>
+            <button id="btn-greatsword" onclick="equipWeapon('greatsword', '대검')" disabled>대검 들기 (미획득)</button>
+            <button id="btn-dagger" onclick="equipWeapon('dagger', '단검')" disabled>단검 들기 (미획득)</button>
+        </div>
+        <div class="panel">
+            <h3>🔥 액션 (현재 무기 전용)</h3>
+            <button onclick="performAction('light')">약공격 / 연속공격</button>
+            <button onclick="performAction('heavy')">강공격</button>
+        </div>
+        <div class="panel">
+            <h3>🏃 기본 모션</h3>
+            <button onclick="playAnim('Idle')">대기</button>
+            <button onclick="playAnim('Run')">달리기</button>
+            <button onclick="playAnim('Dodge')">회피/구르기</button>
+        </div>
+        <div class="panel">
+            <h3>🎁 상자 찾기</h3>
+            <button onclick="unlockWeapon('greatsword')">대검 획득하기!</button>
+            <button onclick="unlockWeapon('dagger')">단검 획득하기!</button>
+        </div>
+    </div>
+
+    <!-- Three.js and GLTFLoader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, mixer, clock, controls;
+        let playerModel, currentWeaponModel;
+        let animations = {};
+        let currentAction;
+        let rightHandBone;
+        let currentWeapon = 'longsword'; // 시작 무기는 장검
+        let vfxTimeout;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+            
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 2, 5);
+
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
+            hemiLight.position.set(0, 20, 0);
+            scene.add(hemiLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(3, 10, 10);
+            scene.add(dirLight);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 1, 0);
+            controls.update();
+
+            const grid = new THREE.GridHelper(20, 20, 0x444455, 0x222233);
+            scene.add(grid);
+
+            clock = new THREE.Clock();
+            loadPlayer();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function loadPlayer() {
+            const loader = new THREE.GLTFLoader();
+            loader.load('models/player.glb', function(gltf) {
+                playerModel = gltf.scene;
+                scene.add(playerModel);
+                
+                mixer = new THREE.AnimationMixer(playerModel);
+                gltf.animations.forEach((clip) => {
+                    animations[clip.name] = mixer.clipAction(clip);
+                });
+
+                // 오른손 뼈대 찾기
+                playerModel.traverse((child) => {
+                    if (child.isBone && (child.name.toLowerCase().includes('hand') || child.name.toLowerCase().includes('wrist'))) {
+                        if(child.name.toLowerCase().includes('r')) rightHandBone = child;
+                    }
+                });
+                if(!rightHandBone) rightHandBone = playerModel;
+
+                // 시작 시 장검 장착 및 대기 모션
+                loadWeapon('longsword');
+                if (animations['Idle']) playAnim('Idle');
+                else if(gltf.animations.length > 0) playAnim(gltf.animations[0].name);
+
+            }, undefined, function(e) { console.error('Error loading player:', e); });
+        }
+
+        function loadWeapon(weaponName) {
+            if (currentWeaponModel) {
+                rightHandBone.remove(currentWeaponModel);
+                currentWeaponModel = null;
+            }
+            const loader = new THREE.GLTFLoader();
+            loader.load('models/' + weaponName + '.glb', function(gltf) {
+                currentWeaponModel = gltf.scene;
+                rightHandBone.add(currentWeaponModel);
+            }, undefined, function(e) { console.error('Error loading weapon:', e); });
+        }
+
+        window.equipWeapon = function(weaponName, krName) {
+            currentWeapon = weaponName;
+            document.getElementById('current-weapon').innerText = krName;
+            loadWeapon(weaponName);
+            playAnim('Idle');
+        }
+
+        window.unlockWeapon = function(weaponName) {
+            document.getElementById('btn-' + weaponName).disabled = false;
+            document.getElementById('btn-' + weaponName).innerText = 
+                (weaponName === 'greatsword' ? '대검' : '단검') + ' 들기';
+            alert((weaponName === 'greatsword' ? '대검' : '단검') + '을(를) 획득했습니다!');
+        }
+
+        window.playAnim = function(name) {
+            if (!animations[name]) {
+                // fallback
+                let fallback = name;
+                if(name === 'Idle' && animations['idle']) fallback = 'idle';
+                
+                if(!animations[fallback]) {
+                   console.warn('Animation not found: ' + name);
+                   
+                   // GPT 모델에 이 애니메이션이 없을 경우 기본 모션으로 대체
+                   if(fallback.includes('Light') && animations['Attack_Light']) fallback = 'Attack_Light';
+                   else if(fallback.includes('Heavy') && animations['Attack_Heavy']) fallback = 'Attack_Heavy';
+                   else if(fallback.includes('Dagger') && animations['Attack_Light']) fallback = 'Attack_Light';
+                   else return;
+                }
+                name = fallback;
+            }
+            if (currentAction && currentAction !== animations[name]) {
+                currentAction.fadeOut(0.2);
+            }
+            currentAction = animations[name];
+            currentAction.reset().fadeIn(0.2).play();
+        }
+
+        window.showVFX = function(color, text) {
+            const vfx = document.getElementById('vfx-text');
+            vfx.innerText = text;
+            vfx.style.color = color;
+            vfx.style.textShadow = `0 0 20px ${color}, 0 0 40px ${color}`;
+            vfx.style.opacity = 1;
+            
+            // 화면 흔들림 효과 (카메라 셰이크)
+            const origY = camera.position.y;
+            camera.position.y = origY + 0.1;
+            setTimeout(() => { camera.position.y = origY - 0.1; }, 50);
+            setTimeout(() => { camera.position.y = origY; }, 100);
+
+            clearTimeout(vfxTimeout);
+            vfxTimeout = setTimeout(() => {
+                vfx.style.opacity = 0;
+            }, 600);
+        }
+
+        window.performAction = function(type) {
+            let animName = 'Attack_Light'; 
+            let effectColor = '#ffffff';
+            let effectText = 'SLASH!';
+
+            if (currentWeapon === 'longsword') {
+                if (type === 'light') { animName = 'Longsword_Light_1'; effectColor = '#a8a29e'; effectText = '예리한 베기!'; }
+                if (type === 'heavy') { animName = 'Longsword_Heavy'; effectColor = '#facc15'; effectText = '강력한 일격!'; }
+            } else if (currentWeapon === 'greatsword') {
+                if (type === 'light') { animName = 'Greatsword_Light_1'; effectColor = '#ef4444'; effectText = '묵직한 횡베기!'; }
+                if (type === 'heavy') { animName = 'Greatsword_Heavy'; effectColor = '#dc2626'; effectText = '지면 붕괴!!'; }
+            } else if (currentWeapon === 'dagger') {
+                if (type === 'light') { animName = 'Dagger_Flurry'; effectColor = '#3b82f6'; effectText = '빠른 연속 찌르기!'; }
+                if (type === 'heavy') { animName = 'Dagger_BackstepAttack'; effectColor = '#8b5cf6'; effectText = '회피 후방 공격!'; }
+            }
+
+            playAnim(animName);
+            
+            // 모션 타이밍에 맞춰 이펙트 출력 (약 0.3초 뒤)
+            setTimeout(() => {
+                showVFX(effectColor, effectText);
+            }, 300);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            if (mixer) mixer.update(delta);
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

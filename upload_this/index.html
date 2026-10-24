@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="파이썬 어드벤처 - RPG 스타일의 파이썬 코딩 학습 플랫폼">
+  <title>🐍 PyAdventure | 파이썬 어드벤처 LMS</title>
+  <link rel="stylesheet" href="styles.css?v=6">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CodeMirror for Editor -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+  
+  <!-- Pyodide for Python Execution -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+</head>
+<body>
+
+  <!-- 상단 네비게이션바 -->
+  <nav class="top-nav">
+    <div class="nav-left">
+      <h1 class="logo">🐍 PyAdventure</h1>
+    <div class="nav-links">
+      <button class="nav-btn" id="nav-dashboard">대시보드</button>
+      <button class="nav-btn" id="nav-learn">📖 파이썬 학습하기</button>
+      <button class="nav-btn" id="nav-algo">🧠 알고리즘 마스터</button>
+      <button class="nav-btn" id="nav-skills">스킬(상점)</button>
+      <button class="nav-btn" id="nav-review">오답노트</button>
+      <button class="nav-btn" id="nav-ranked">경쟁전</button>
+      <button class="nav-btn" id="nav-boss">보스 레이드</button>
+    </div>
+    </div>
+    <div class="nav-right" style="display: flex; align-items: center;">
+      <button id="btn-theme-toggle" class="btn outline-btn small-btn" style="margin-right: 15px; font-size: 13px;">☀️ 라이트모드</button>
+      <div id="nav-auth-buttons" class="auth-group">
+        <input type="text" id="username" placeholder="아이디" class="nav-input" autocomplete="off" />
+        <input type="text" id="nickname" placeholder="닉네임(가입시)" class="nav-input" autocomplete="off" />
+        <button id="btn-login" class="btn primary-btn small-btn">로그인</button>
+        <button id="btn-signup" class="btn secondary-btn small-btn">가입</button>
+      </div>
+      <div id="nav-user-info" class="user-info hidden">
+        <span id="disp-level" class="badge level-badge">Lv. 1</span>
+        <span id="disp-nickname">플레이어</span>
+        <button id="btn-logout" class="btn outline-btn small-btn">로그아웃</button>
+      </div>
+    </div>
+  </nav>
+
+
+
+  <!-- 홈(대시보드) 화면 -->
+  <div id="dashboard-screen" class="screen active">
+    <div class="dashboard-container">
+
+      <!-- 상단 헤더: 좌(인사+스탯) + 우(랭크) -->
+      <div class="dash-header-row">
+        <div class="dash-header-left">
+          <h2>환영합니다, <span id="dash-nickname-disp">게스트</span>님! <span id="dash-level-disp" class="badge level-badge" style="font-size: 20px; margin-left: 12px; padding: 6px 16px;">Lv. 1</span></h2>
+          
+          <!-- 레벨 진행도 바 -->
+          <div style="margin-bottom: 18px; max-width: 400px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: 700; margin-bottom: 6px;">
+              <span>다음 레벨까지</span>
+              <span><span id="dash-exp-text">0 / 100</span> EXP</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+              <div id="dash-exp-bar" style="height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+
+          <div class="dash-stats">
+            🎯 전체 정답률: <strong id="dash-accuracy" style="color: var(--primary-hover); font-size: 24px;">0%</strong>
+            (시도: <span id="dash-attempts" style="font-weight: 800;">0</span>회 / 정답: <span id="dash-correct" style="font-weight: 800;">0</span>회)
+            <span style="margin-left: 18px; font-weight: 900; color: var(--warning);">🔥 현재 콤보: <span id="dash-combo" style="font-size: 22px;">0</span></span>
+          </div>
+          <p style="color: var(--text-main); font-size: 17.5px; margin-bottom: 0; font-weight: 500;">파이썬 어드벤처에 오신 걸 환영합니다! 오른쪽 위에서 로그인 또는 가입을 해주세요.</p>
+        </div>
+
+        <!-- 랭크 패널 -->
+        <div class="dash-rank-panel">
+          <div class="dash-rank-panel-inner">
+            <div id="dash-rank-hex" class="rank-hex"></div>
+            <div class="dash-rank-info">
+              <span id="dash-rank-name" class="dash-rank-label">브론즈</span>
+              <span class="dash-rank-rating">레이팅: <strong id="dash-rating-disp">1000</strong>점</span>
+            </div>
+          </div>
+          
+          <!-- 레이팅 진행도 바 -->
+          <div style="width: 100%; margin-top: 8px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 5px;">
+              <span>다음 랭크까지</span>
+              <span id="dash-rating-text">0 / 200</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+              <div id="dash-rating-bar" style="height: 100%; background: linear-gradient(90deg, #f59e0b, #ef4444); width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+          <p class="dash-rank-desc" style="margin-top: 8px;">AI 랭크 배틀을 통해<br>랭크를 올려보세요!</p>
+        </div>
+      </div>
+
+      <!-- 일일 퀘스트 -->
+      <div class="dashboard-quests">
+        <h3 style="margin-bottom: 18px; color: var(--primary); font-size: 22px; font-weight: 800;">📜 오늘의 일일 퀘스트</h3>
+        <div id="dash-quest-list" style="display: flex; flex-direction: column; gap: 10px;">
+           <!-- JS render -->
+        </div>
+      </div>
+      
+      <div class="dash-cards">
+        <div class="dash-card" id="card-learn">
+          <div class="card-icon">📖</div>
+          <h3>파이썬 학습하기</h3>
+          <p>개념을 배우고 몬스터를 물리치세요.</p>
+        </div>
+        <div class="dash-card" id="card-skills">
+          <div class="card-icon">✨</div>
+          <h3>스킬 관리</h3>
+          <p>보유한 스킬을 장착하고 확인하세요.</p>
+        </div>
+        <div class="dash-card" id="card-ranked">
+          <div class="card-icon">🏆</div>
+          <h3>경쟁전</h3>
+          <p>AI와 파이썬 코딩 대결을 펼쳐보세요.</p>
+        </div>
+        <div class="dash-card" id="card-algo" style="border: 2px solid rgba(99,102,241,0.3); background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.08));">
+          <div class="card-icon">🧠</div>
+          <h3>알고리즘 마스터</h3>
+          <p>개념 + 예제 + 실습 + AI 설명</p>
+        </div>
+        <div class="dash-card" id="card-review">
+          <div class="card-icon">📝</div>
+          <h3>오답 노트</h3>
+          <p>틀렸던 문제를 다시 복습하세요.</p>
+        </div>
+        <div class="dash-card" id="card-boss">
+          <div class="card-icon">👿</div>
+          <h3>보스 레이드</h3>
+          <p>거대 보스를 시간 내에 격파하세요!</p>
+        </div>
+      </div>
+      
+      <!-- 📊 정답률 & 취약점 분석 패널 -->
+      <div class="dashboard-analysis" style="margin-bottom: 36px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+          <h3 style="font-size: 24px; font-weight: 800; color: var(--text-bright);">📊 나의 학습 분석</h3>
+          <span style="font-size: 14px; color: var(--text-muted); font-weight: 700; background: var(--glass-bg); border: 1px solid var(--glass-border); padding: 6px 16px; border-radius: 20px;">실시간 업데이트</span>
+        </div>
+        <div id="dash-analysis" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 28px; backdrop-filter: blur(12px);">
+          <p style="color: var(--text-muted); font-size: 16.5px; text-align: center; padding: 20px;">로그인 후 분석 결과를 확인할 수 있습니다.</p>
+        </div>
+      </div>
+      
+      <div class="dashboard-curriculum">
+        <h3 style="margin-bottom: 15px; color: var(--text-bright);">📚 전체 학습 목차</h3>
+        <div id="dash-chapter-list" class="dash-chapter-grid">
+          <!-- JS로 동적 생성 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 알고리즘 마스터 화면 -->
+  <div id="algo-screen" class="screen">
+    <div class="algo-layout">
+
+      <!-- 좌측 챕터 사이드바 -->
+      <aside class="algo-sidebar">
+        <div class="algo-sidebar-header">
+          <span style="font-size:20px;">🧠</span>
+          <h3>알고리즘 마스터</h3>
+        </div>
+        <div id="algo-chapter-nav">
+          <!-- JS로 동적 생성 -->
+        </div>
+      </aside>
+
+      <!-- 중앙 콘텐츠 패널 -->
+      <main class="algo-main">
+
+        <!-- 챕터 헤더 -->
+        <div class="algo-chapter-header">
+          <div>
+            <span id="algo-section-badge" class="algo-badge">01-1</span>
+            <h2 id="algo-section-title" style="display:inline; font-size:22px; margin-left:10px;">알고리즘이란?</h2>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <span id="algo-progress-text" style="font-size:13px; color:var(--text-muted);"></span>
+            <button id="btn-algo-ask-ai" class="btn secondary-btn small-btn">🤖 AI 보강설명</button>
+          </div>
+        </div>
+
+        <!-- 개념 설명 탭 영역 -->
+        <div class="algo-tabs">
+          <button class="algo-tab active" data-tab="concept">📖 개념설명</button>
+          <button class="algo-tab" data-tab="examples">💻 코드 예제</button>
+          <button class="algo-tab" data-tab="practice">🎯 실습 문제</button>
+        </div>
+
+        <!-- 탭 컨텐츠 -->
+        <div id="algo-tab-concept" class="algo-tab-content active">
+          <div id="algo-concept-body" class="algo-concept-body">
+            <!-- 개념 설명 동적 주입 -->
+          </div>
+          <div id="algo-ai-box" class="algo-ai-box hidden">
+            <div class="algo-ai-header">🤖 AI 선생님의 보강설명</div>
+            <div id="algo-ai-content" style="font-size:14px; line-height:1.8; color:var(--text-main);"></div>
+          </div>
+        </div>
+
+        <div id="algo-tab-examples" class="algo-tab-content">
+          <div id="algo-examples-list">
+            <!-- 예제 목록 동적 주입 -->
+          </div>
+        </div>
+
+        <div id="algo-tab-practice" class="algo-tab-content">
+          <div id="algo-practice-list">
+            <!-- 실습 문제 동적 주입 -->
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+  </div>
+
+  <!-- 메인 학습 화면 -->
+  <div id="learn-screen" class="screen">
+    <div class="app-container">
+      
+      <!-- 좌측 목차 사이드바 -->
+      <aside class="sidebar">
+        <h3 style="display: flex; align-items: center; gap: 10px;">
+          학습 커리큘럼 
+          <span id="sidebar-level-disp" class="badge level-badge" style="font-size: 13px;">Lv. 1</span>
+        </h3>
+        <div class="progress-wrap">
+          <div class="progress-text">EXP: <span id="disp-exp">0</span> / <span id="disp-max-exp">100</span></div>
+          <div class="progress-bar"><div id="exp-fill" class="progress-fill green"></div></div>
+        </div>
+        <div class="chapter-list" id="chapter-list">
+          <!-- JS로 동적 생성 -->
+        </div>
+      </aside>
+
+      <!-- 중앙 몬스터 및 개념 설명 -->
+      <main class="content-panel">
+        <div class="battle-arena">
+          <div class="monster-zone">
+            <div class="monster-hp-bar"><div id="monster-hp-fill" class="monster-hp-fill"></div></div>
+            <div id="monster-sprite" class="monster-sprite bounce">👾</div>
+            <div id="monster-name" class="monster-name">버그 슬라임</div>
+          </div>
+          <div class="player-zone">
+            <div id="player-sprite" class="player-sprite">👦</div>
+            <div class="player-hp-bar"><div id="player-hp-fill" class="player-hp-fill"></div></div>
+          </div>
+          <div id="damage-container"></div>
+        </div>
+        
+        <div class="concept-box glass-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; border-bottom: 1px dashed var(--border-color); padding-bottom: 14px;">
+            <h2 id="concept-title" style="margin: 0; font-size: 24px;">단원 제목</h2>
+            <div class="ai-question-options">
+              <span style="font-size: 13px; font-weight: 800; color: #e879f9;">🎲 AI 추가 문제:</span>
+              <button id="btn-gen-easy" class="btn outline-btn small-btn" style="padding: 5px 10px; font-size: 12px; border-color: #34d399; color: #34d399;">🌱 더 쉽게</button>
+              <button id="btn-gen-similar" class="btn outline-btn small-btn" style="padding: 5px 10px; font-size: 12px; border-color: #60a5fa; color: #60a5fa;">⚖️ 비슷한 난이도</button>
+              <button id="btn-gen-hard" class="btn outline-btn small-btn" style="padding: 5px 10px; font-size: 12px; border-color: #f87171; color: #f87171;">🔥 더 어렵게</button>
+            </div>
+          </div>
+          <div id="concept-desc" class="concept-text">여기에 개념 설명이 들어갑니다.</div>
+          
+          <div style="margin-top: 15px; text-align: right;">
+            <button id="btn-ask-ai" class="btn secondary-btn small-btn">🤖 AI 선생님께 더 묻기</button>
+          </div>
+          <div id="ai-explanation-box" class="hidden" style="margin-top: 12px; padding: 16px; background: var(--panel-bg); border: 1px solid var(--primary-glow); border-radius: 12px; font-size: 14px; line-height: 1.6; color: var(--text-main); box-shadow: 0 0 15px rgba(16,185,129,0.15);">
+             <!-- AI 응답 렌더링 -->
+          </div>
+
+          <div class="mission-box" style="margin-top: 20px;">
+            <h4>⚔️ 전투 미션</h4>
+            <p id="mission-desc">코드를 작성하여 몬스터를 공격하세요!</p>
+          </div>
+        </div>
+
+        <!-- 하단 장착 스킬 바 -->
+        <div class="skill-bar" id="battle-skills">
+          <!-- 스킬 버튼들 -->
+        </div>
+      </main>
+
+      <!-- 우측 코드 에디터 -->
+      <aside class="editor-panel">
+        <div class="editor-header">
+          <span>파이썬 에디터</span>
+          <button id="btn-run-code" class="btn primary-btn small-btn">▶ 코드 실행 (공격!)</button>
+        </div>
+        <textarea id="code-editor"></textarea>
+        <div class="terminal-header">터미널 출력결과</div>
+        <pre id="terminal-output" class="terminal-box"></pre>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- 경쟁전 화면 -->
+  <div id="ranked-screen" class="screen">
+    <div class="ranked-container">
+      <div class="ranked-header" id="ranked-header">
+        <h2 style="font-size: 32px; font-weight: 900; background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px;">🏆 AI 랭크 배틀 🏆</h2>
+        <p style="color: var(--text-muted);">AI보다 먼저 5문제를 해결하세요! (현재 내 티어: <strong id="ranked-tier-disp" style="color: var(--primary-hover);">브론즈 🥉</strong>, 레이팅: <span id="ranked-rating-disp">1000</span>점)</p>
+        <button id="btn-ranked-start" class="btn primary-btn" style="margin-top: 10px; font-size: 16px;">🔥 배틀 시작</button>
+        <button class="btn outline-btn" onclick="showScreen('dashboard-screen')" style="margin-top: 10px;">포기하고 나가기</button>
+      </div>
+
+      <div id="ranked-arena" class="hidden">
+        <div class="score-board">
+          <div class="player-score">나의 점수: <span id="r-score-player">0</span> / 5</div>
+          <div class="ai-score" id="ai-score-disp">AI 점수: <span id="r-score-ai">0</span> / 5</div>
+        </div>
+        
+        <div class="ranked-question-box glass-panel">
+          <h3 id="r-question-title" style="color: var(--primary);">문제 로딩중...</h3>
+          <p id="r-question-desc" style="margin-top: 10px; font-size: 14px; color: var(--text-muted);"></p>
+          <div class="r-question-text" id="r-question-text" style="margin-top: 15px; font-weight: 700;"></div>
+        </div>
+
+        <div class="ranked-editor-area">
+          <div class="editor-header">
+            <span>💻 빠른 코드 작성</span>
+          </div>
+          <textarea id="ranked-code-editor"></textarea>
+          <button id="btn-ranked-run" class="btn primary-btn run-btn" style="width: 100%; margin-top: 10px; font-size: 16px;">▶ 정답 제출 (스피드 공격!)</button>
+          <pre id="r-terminal-output" class="terminal-box" style="height: 120px; flex: none; margin-top: 10px;"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 보스 레이드 화면 -->
+  <div id="boss-screen" class="screen">
+    <div class="boss-container" style="max-width: 900px; margin: 20px auto; width: 100%; display: flex; flex-direction: column; gap: 20px; padding: 20px;">
+      
+      <!-- 보스 선택 로비 -->
+      <div id="boss-lobby" class="boss-lobby" style="text-align: center; width: 100%;">
+        <div class="boss-lobby-header" style="margin-bottom: 30px;">
+          <h2 style="font-size: 32px; color: var(--text-main); margin-bottom: 10px;">👿 보스 레이드 포탈 👿</h2>
+          <p style="color: var(--text-muted); font-size: 16px;">보스를 선택하여 실시간 타임어택 코딩 배틀에 도전하세요!</p>
+          <button class="btn outline-btn" onclick="showScreen('dashboard-screen')" style="margin-top: 15px;">포기하고 나가기</button>
+        </div>
+        <div class="boss-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 25px; margin-top: 20px;">
+          
+          <!-- 보스 1: 킹 슬라임 -->
+          <div class="boss-select-card" style="background: var(--panel-bg); border-radius: 16px; padding: 25px; border: 2px solid var(--border-color); text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; height: 350px;">
+            <div>
+              <div class="boss-card-icon" style="font-size: 48px; margin-bottom: 10px;">👑</div>
+              <h3 style="font-size: 20px; margin-bottom: 10px;">킹 슬라임</h3>
+              <div class="boss-card-meta" style="font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 15px;">
+                <span>HP: 300</span> | <span>시간: 90초</span>
+              </div>
+              <p class="boss-card-desc" style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 15px;">초급 난이도 (easy) 문제 출제<br>문제당 보상: 30 EXP<br>토벌 성공 보너스: 200 EXP</p>
+            </div>
+            <button class="btn primary-btn btn-start-boss-raid" data-boss-id="1" style="width: 100%;">⚔️ 레이드 시작</button>
+          </div>
+          
+          <!-- 보스 2: 타락한 AI -->
+          <div class="boss-select-card" style="background: var(--panel-bg); border-radius: 16px; padding: 25px; border: 2px solid var(--border-color); text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; height: 350px;">
+            <div>
+              <div class="boss-card-icon" style="font-size: 48px; margin-bottom: 10px;">🤖</div>
+              <h3 style="font-size: 20px; margin-bottom: 10px;">타락한 AI</h3>
+              <div class="boss-card-meta" style="font-size: 14px; font-weight: bold; color: var(--secondary); margin-bottom: 15px;">
+                <span>HP: 500</span> | <span>시간: 150초</span>
+              </div>
+              <p class="boss-card-desc" style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 15px;">중급 난이도 (medium) 문제 출제<br>문제당 보상: 50 EXP<br>토벌 성공 보너스: 350 EXP</p>
+            </div>
+            <button class="btn primary-btn btn-start-boss-raid" data-boss-id="2" style="width: 100%; background: var(--secondary);">⚔️ 레이드 시작</button>
+          </div>
+          
+          <!-- 보스 3: 코드 드래곤 -->
+          <div class="boss-select-card" style="background: var(--panel-bg); border-radius: 16px; padding: 25px; border: 2px solid var(--border-color); text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; height: 350px;">
+            <div>
+              <div class="boss-card-icon" style="font-size: 48px; margin-bottom: 10px;">🐉</div>
+              <h3 style="font-size: 20px; margin-bottom: 10px;">코드 드래곤</h3>
+              <div class="boss-card-meta" style="font-size: 14px; font-weight: bold; color: var(--danger); margin-bottom: 15px;">
+                <span>HP: 800</span> | <span>시간: 200초</span>
+              </div>
+              <p class="boss-card-desc" style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 15px;">고급 난이도 (hard) 문제 출제<br>문제당 보상: 80 EXP<br>토벌 성공 보너스: 500 EXP</p>
+            </div>
+            <button class="btn primary-btn btn-start-boss-raid" data-boss-id="3" style="width: 100%; background: var(--danger);">⚔️ 레이드 시작</button>
+          </div>
+          
+        </div>
+      </div>
+      
+      <!-- 보스 인게임 배틀 아레나 -->
+      <div id="boss-arena" class="boss-arena hidden" style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- 상단 보스 정보 & 타이머 -->
+        <div class="boss-battle-header" style="display: flex; justify-content: space-between; align-items: center; background: var(--panel-bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+          <div class="boss-hp-section" style="flex: 1; margin-right: 30px;">
+            <h3 id="boss-active-name" style="margin-bottom: 8px; font-size: 22px;">킹 슬라임</h3>
+            <div class="boss-huge-hp-bar" style="width: 100%; height: 24px; background: rgba(0,0,0,0.1); border-radius: 12px; overflow: hidden; position: relative;">
+              <div id="boss-huge-hp-fill" class="boss-huge-hp-fill" style="height: 100%; background: linear-gradient(90deg, #f43f5e, #e11d48); width: 100%; transition: width 0.3s;"></div>
+              <span id="boss-hp-text" class="hp-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 13px; text-shadow: 0 1px 3px rgba(0,0,0,0.4);">300 / 300</span>
+            </div>
+          </div>
+          <div class="boss-timer-section" style="text-align: center; background: rgba(244,63,94,0.12); border: 2px solid rgba(244,63,94,0.3); border-radius: 12px; padding: 10px 20px; min-width: 110px;">
+            <div class="timer-title" style="font-size: 11px; font-weight: 800; color: var(--danger); text-transform: uppercase;">남은 시간</div>
+            <div id="boss-timer-disp" class="timer-clock" style="font-size: 24px; font-weight: 900; color: var(--danger); margin-top: 2px; text-shadow: 0 0 8px rgba(244,63,94,0.4);">90초</div>
+          </div>
+        </div>
+        
+        <!-- 플레이어 HP바 -->
+        <div class="boss-player-header" style="display: flex; align-items: center; justify-content: space-between; background: var(--panel-bg); padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+          <div style="font-weight:bold; color:var(--text-main); font-size: 14px; display: flex; align-items: center; gap: 8px;">👦 나의 체력</div>
+          <div class="boss-player-hp-bar" style="width: 80%; height: 16px; background: rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; position: relative;">
+            <div id="boss-player-hp-fill" style="height: 100%; background: linear-gradient(90deg, #10b981, #059669); width: 100%; transition: width 0.3s;"></div>
+            <span id="boss-player-hp-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">100 / 100</span>
+          </div>
+        </div>
+        
+        <!-- 중앙 보스 문제 영역 -->
+        <div class="boss-question-area">
+          <div class="boss-question-box glass-panel" style="padding: 25px; text-align: center; border: 1px solid var(--border-color); border-radius: 16px; background: var(--panel-bg); box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <h3 id="boss-q-title" style="color: var(--primary); font-size: 18px;">문제 로딩중...</h3>
+            <p id="boss-q-desc" style="margin-top: 10px; font-size: 14px; color: var(--text-muted); line-height: 1.5;"></p>
+            <div id="boss-q-text" class="boss-q-text" style="margin-top: 15px; font-weight: 700; font-size: 15px; background: var(--glass-bg); color: var(--text-bright); padding: 12px 18px; border-radius: 10px; border: 1px dashed var(--primary-hover); display: inline-block;"></div>
+          </div>
+        </div>
+        
+        <!-- 하단 에디터 영역 -->
+        <div class="boss-editor-area" style="display: flex; flex-direction: column; background: var(--panel-bg); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+          <div class="editor-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-bottom: 1px solid var(--border-color); font-weight: 600; font-size: 14px; background: var(--glass-bg);">
+            <span>💻 초고속 보스전 에디터</span>
+          </div>
+          <textarea id="boss-code-editor"></textarea>
+          <button id="btn-boss-run" class="btn primary-btn run-btn" style="width: 100%; border-radius: 0; font-size: 16px; padding: 12px; font-weight: 700;">▶ 초고속 공격 제출! (정답 확인)</button>
+          <pre id="boss-terminal-output" class="terminal-box" style="height: 120px; flex: none; border-top: 1px solid var(--border-color);"></pre>
+        </div>
+        
+      </div>
+      
+    </div>
+  </div>
+
+  <!-- 오버레이 스크린들 (오답노트, 스킬관리 등) -->
+  <div id="overlay-screen" class="screen full-center overlay-bg">
+    <div class="overlay-content glass-panel" id="overlay-content-box">
+      <header class="overlay-header">
+        <h2 id="overlay-title">제목</h2>
+        <button id="btn-close-overlay" class="btn danger-btn small-btn">X</button>
+      </header>
+      <div id="overlay-body" class="overlay-body">
+        <!-- 동적 주입 -->
+      </div>
+    </div>
+  </div>
+  
+  <div id="overlay-apikey" class="full-center overlay-bg hidden" style="z-index: 1000; position: fixed;">
+    <div class="overlay-content glass-panel" style="max-width: 400px; text-align: center; padding: 0;">
+      <header class="overlay-header">
+        <h2>🔑 AI 튜터 설정</h2>
+        <button class="btn danger-btn small-btn" onclick="document.getElementById('overlay-apikey').classList.add('hidden')">X</button>
+      </header>
+      <div class="overlay-body">
+        <p style="font-size: 14px; margin-bottom: 15px;">AI 선생님 기능을 사용하려면 OpenAI API 키가 필요합니다.<br>(입력하신 키는 브라우저에만 안전하게 저장됩니다)</p>
+        <input type="password" id="input-openai-key" placeholder="sk-..." class="nav-input" style="width: 100%; margin-bottom: 15px; font-size: 14px;">
+        <button id="btn-save-apikey" class="btn primary-btn" style="width: 100%; font-size: 16px;">저장하고 질문하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="review-confirm-popup" class="review-popup hidden">
+    <div class="review-popup-content">
+      <div class="review-popup-header">
+        <span>📝 <strong>오답노트 등록</strong></span>
+      </div>
+      <p id="review-confirm-text">이 문제를 오답노트에 등록할까요?</p>
+      <div class="review-popup-buttons">
+        <button id="btn-review-confirm-yes" class="btn primary-btn small-btn">등록</button>
+        <button id="btn-review-confirm-no" class="btn outline-btn small-btn">나중에</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="global-alert" class="alert-box hidden">알림 메시지</div>
+
+  <!-- =============================================
+       🤖 FLOATING AI PYTHON TUTOR CHAT WIDGET
+       ============================================= -->
+  <!-- Floating Toggle Button -->
+  <button id="ai-chat-toggle" class="ai-chat-toggle" title="파이썬 AI 선생님에게 질문하기">
+    <span class="ai-chat-icon">🤖</span>
+    <span class="ai-chat-label">파이썬 AI</span>
+  </button>
+
+  <!-- Chat Panel -->
+  <div id="ai-chat-panel" class="ai-chat-panel hidden">
+    <div class="ai-chat-header">
+      <div class="ai-chat-title">
+        <span>🤖</span>
+        <div>
+          <div style="font-weight:900;font-size:15px;">파이썬 AI 선생님</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:500;">파이썬 관련 무엇이든 물어보세요!</div>
+        </div>
+      </div>
+      <button id="ai-chat-close" class="ai-chat-close">✕</button>
+    </div>
+
+    <div id="ai-chat-messages" class="ai-chat-messages">
+      <div class="ai-chat-msg ai-msg">
+        <div class="ai-chat-bubble">
+          안녕하세요! 저는 파이썬 AI 선생님이에요 🐍<br><br>
+          파이썬에 대해 궁금한 것은 무엇이든 물어보세요! 개념, 문법, 예제 코드 등 초보자도 쉽게 이해할 수 있게 설명해드릴게요 😊
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-chat-input-row">
+      <input id="ai-chat-input" class="ai-chat-input" type="text"
+        placeholder="파이썬에 대해 질문해보세요..." autocomplete="off" />
+      <button id="ai-chat-send" class="ai-chat-send">
+        <span>▶</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="problems.js?v=2"></script>
+  <script src="skills.js?v=2"></script>
+  <script src="algorithms.js?v=4"></script>
+  <script src="main.js?v=9"></script>
+</body>
+</html>

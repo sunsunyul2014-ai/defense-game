@@ -1,0 +1,2999 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마인크래프트 야쿠자: 카무로초 블록 배틀</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #030308;
+            color: #ffffff;
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 시네마틱 레터박스 */
+        .letterbox {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 7%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 20;
+            pointer-events: none;
+            border-bottom: 2px solid #222;
+        }
+        .lb-top { top: 0; }
+        .lb-bottom { bottom: 0; border-top: 2px solid #222; border-bottom: none; }
+
+        /* UI 레이어 */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 30;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 30px 40px;
+        }
+
+        /* 상단 타이틀 & 적 체력 */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 25px;
+        }
+
+        .title-box {
+            background: rgba(10, 10, 15, 0.88);
+            padding: 12px 20px;
+            border-left: 5px solid #ff2244;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+        }
+        .title-box h1 {
+            margin: 0;
+            font-size: 26px;
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            font-weight: 900;
+            color: #ff3344;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 34, 68, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .title-box .sub {
+            font-size: 13px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        /* 적 보스 HP 바 (야쿠자 스타일) */
+        .boss-hp-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            width: 420px;
+            background: rgba(10, 10, 15, 0.88);
+            padding: 12px 18px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .boss-name-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 15px;
+            font-weight: 900;
+            margin-bottom: 6px;
+            color: #ffcc00;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .boss-hp-frame {
+            width: 100%;
+            height: 18px;
+            background: #1a0000;
+            border: 2px solid #550000;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        .boss-hp-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff0055, #ff8800);
+            box-shadow: 0 0 10px #ff3300;
+            transition: width 0.1s ease-out;
+        }
+
+        /* 실시간 성능 모니터 & 그래픽 설정 */
+        .perf-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 11px;
+            pointer-events: auto;
+        }
+        .perf-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #a0cfff;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .perf-tag {
+            background: rgba(0, 229, 255, 0.15);
+            color: #00ffff;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-weight: 900;
+            font-size: 10px;
+        }
+        .perf-btn {
+            background: rgba(0, 30, 60, 0.85);
+            color: #00ffff;
+            border: 1px solid #00c3ff;
+            padding: 3px 9px;
+            border-radius: 4px;
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 0 6px rgba(0, 200, 255, 0.3);
+        }
+        .perf-btn:hover {
+            background: #0099cc;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(0, 229, 255, 0.8);
+            transform: scale(1.03);
+        }
+
+        /* 플레이어 히트 게이지 (HEAT BAR) */
+        .player-status {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .heat-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .heat-label {
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            font-weight: 900;
+            font-size: 20px;
+            color: #00e5ff;
+            text-shadow: 0 0 10px #00e5ff;
+        }
+        .heat-bar-frame {
+            width: 250px;
+            height: 12px;
+            background: #002233;
+            border: 2px solid #005577;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .heat-bar-fill {
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, #00aaff, #00ffff);
+            box-shadow: 0 0 12px #00e5ff;
+            transition: width 0.15s;
+        }
+        .heat-ready-glow {
+            animation: pulse-glow 0.8s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 10px #00ffff; }
+            to { box-shadow: 0 0 25px #00ffff, 0 0 40px #0088ff; }
+        }
+
+        /* 콤보 디스플레이 */
+        .combo-center {
+            position: absolute;
+            right: 60px;
+            top: 40%;
+            text-align: right;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.2s, transform 0.1s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .combo-num {
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            font-weight: 900;
+            font-size: 85px;
+            line-height: 1;
+            color: #ffdd00;
+            text-shadow: 0 0 20px #ff6600, 4px 4px 0 #000;
+            display: inline-block;
+        }
+        .combo-text {
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            font-weight: 900;
+            font-size: 38px;
+            color: #ffffff;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px #ff2244, 2px 2px 0 #000;
+        }
+        .heat-action-alert {
+            font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            font-weight: 900;
+            font-size: 28px;
+            color: #00ffff;
+            background: rgba(0, 40, 80, 0.85);
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: 2px solid #00e5ff;
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.7);
+            margin-top: 10px;
+            animation: flash-heat 0.5s infinite alternate;
+        }
+        @keyframes flash-heat {
+            from { opacity: 0.8; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* 하단 조작 가이드 & 마크 핫바 */
+        .bottom-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 25px;
+        }
+        .guide-box {
+            background: rgba(10, 10, 15, 0.90);
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 13px;
+            color: #ddd;
+            line-height: 1.6;
+        }
+        .guide-key {
+            display: inline-block;
+            background: #252836;
+            color: #ffdd44;
+            font-weight: bold;
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid #444a60;
+            margin: 0 3px;
+        }
+
+        /* 대시 쿨타임 미니 HUD (사용자 요청: 영상 속 미니 그림 쿨타임 표시) */
+        .dash-hud-panel {
+            background: rgba(8, 12, 22, 0.92);
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 229, 255, 0.35);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 15px rgba(0, 229, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            user-select: none;
+            backdrop-filter: blur(8px);
+        }
+        .dash-hud-title {
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #00ffff;
+            text-shadow: 0 0 8px rgba(0, 229, 255, 0.8);
+        }
+        .dash-slots-row {
+            display: flex;
+            gap: 10px;
+        }
+        .dash-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 72px;
+            background: rgba(14, 20, 32, 0.95);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 6px 4px;
+            transition: all 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            position: relative;
+            overflow: hidden;
+        }
+        .dash-slot.is-ready {
+            border-color: rgba(0, 229, 255, 0.55);
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.25);
+        }
+        .dash-slot.on-cooldown {
+            border-color: rgba(255, 42, 109, 0.45);
+            opacity: 0.85;
+            transform: scale(0.97);
+        }
+        .dash-icon-box {
+            width: 44px;
+            height: 44px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dash-svg {
+            width: 30px;
+            height: 30px;
+            filter: drop-shadow(0 0 4px currentColor);
+            transition: transform 0.15s ease-out;
+        }
+        .dash-slot:hover .dash-svg {
+            transform: scale(1.1);
+        }
+        .dash-cd-mask {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: rgba(10, 5, 18, 0.82);
+            backdrop-filter: grayscale(80%);
+            transition: height 0.05s linear;
+        }
+        .dash-cd-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 13px;
+            font-weight: 900;
+            font-family: monospace;
+            color: #ffdd44;
+            text-shadow: 0 0 6px #000, 1px 1px 2px #000;
+            display: none;
+            pointer-events: none;
+        }
+        .dash-label-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 4px;
+            gap: 2px;
+        }
+        .dash-badge {
+            font-size: 9px;
+            font-weight: 900;
+            color: #ffdd44;
+            background: #252836;
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid #444a60;
+            font-family: monospace;
+        }
+        .dash-name {
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+        .dash-shake {
+            animation: dash-slot-shake 0.25s ease-in-out;
+        }
+        @keyframes dash-slot-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); }
+            40%, 80% { transform: translateX(4px); }
+        }
+        .dash-ready-pop {
+            animation: dash-ready-pop 0.35s ease-out;
+        }
+        @keyframes dash-ready-pop {
+            0% { transform: scale(0.95); filter: brightness(1); }
+            50% { transform: scale(1.15); filter: brightness(2) drop-shadow(0 0 15px #00ffff); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        /* 화면 플래시 완전 비활성화 (사용자 요청: 공격 시 화면 하얗게 번쩍이는 현상 영구 제거) */
+        #screen-flash {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+        #heat-vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 100px rgba(0, 200, 255, 0.4);
+            opacity: 0;
+            z-index: 25;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        /* 로블록스 정통 쉬프트락(Shift Lock) 크로스헤어 */
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 14px;
+            height: 14px;
+            pointer-events: none;
+            z-index: 40;
+            border: 2px solid rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.9), inset 0 0 4px rgba(0, 229, 255, 0.8);
+        }
+        #crosshair::before {
+            content: '';
+            position: absolute;
+            top: 4px; left: 4px; width: 2px; height: 2px;
+            background: #ffffff;
+            border-radius: 50%;
+        }
+
+        .shift-lock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0, 40, 80, 0.85);
+            color: #00ffff;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 3px 10px;
+            border-radius: 12px;
+            border: 1px solid #00e5ff;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+            margin-top: 6px;
+            letter-spacing: 1px;
+        }
+    </style>
+
+    <!-- Three.js 및 Postprocessing -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div class="letterbox lb-top"></div>
+    <div class="letterbox lb-bottom"></div>
+    <div id="screen-flash"></div>
+    <div id="heat-vignette"></div>
+    <div id="crosshair"></div>
+
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div class="title-box">
+                <h1>★ 도쿄 카무로초 거리 (KAMUROCHO)</h1>
+                <div class="sub">마인크래프트 액션 RPG 엔진 v2.0 - 야쿠자 극(極) 콤보</div>
+                <div class="shift-lock-badge">🔒 SHIFT LOCK 고정</div>
+                <div class="player-status">
+                    <div class="heat-wrapper">
+                        <span class="heat-label">極 HEAT</span>
+                        <div class="heat-bar-frame">
+                            <div class="heat-bar-fill" id="player-heat"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="boss-hp-wrapper">
+                <div class="boss-name-row">
+                    <span>동성회 직계 동백조 두목 (마지마 고로 스타일)</span>
+                    <span id="boss-hp-text">100 / 100</span>
+                </div>
+                <div class="boss-hp-frame">
+                    <div class="boss-hp-fill" id="boss-hp-bar"></div>
+                </div>
+                <div class="perf-row">
+                    <div class="perf-stat"><span class="perf-tag">FPS</span> <b id="fps-val">60</b></div>
+                    <div class="perf-stat"><span class="perf-tag">FRAME</span> <b id="ms-val">16.6ms</b></div>
+                    <button id="perf-toggle-btn" class="perf-btn" title="클릭하여 그래픽 품질/최적화 모드 변경">⚡ 고성능 최적화 (60FPS+)</button>
+                    <button id="fs-toggle-btn" class="perf-btn" style="border-color:#00ffaa; color:#00ffaa;" title="전체화면 전환 (단축키 완전 방어)">⛶ 전체화면 (F키)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="combo-center" id="combo-box">
+            <div><span class="combo-num" id="combo-count">0</span></div>
+            <div class="combo-text">RUSH COMBO!</div>
+            <div class="heat-action-alert" id="heat-action-prompt" style="display:none;">[E] 극(極) 액션 가능!</div>
+        </div>
+
+        <div class="bottom-bar">
+            <div class="guide-box">
+                <div><span class="guide-key">W A S D</span> 이동 | <span class="guide-key">Shift</span> <b>초고속 전력질주 (15m/s)</b> | <span class="guide-key">F</span> <b>전체화면</b></div>
+                <div><span class="guide-key">Q / Ctrl / 더블탭</span> <b>대시:</b> 앞대시(Q / W더블탭 / Ctrl단독) | 옆대시(A,D+Q) | 뒤대시(S+Q)</div>
+                <div><span class="guide-key">좌클릭 / Space</span> <b>100% 제자리 4단 콤보</b> (화면 하얘짐 & 적 빨려들어감 완전 제거)</div>
+                <div><span class="guide-key">우클릭 / E</span> [극의] 히트 액션 | <span class="guide-key">마우스 휠</span> 화면 줌</div>
+            </div>
+
+            <!-- 대시 스킬 쿨타임 미니 HUD (사용자 요청: 영상 스타일 미니 그림 표시) -->
+            <div class="dash-hud-panel">
+                <div class="dash-hud-title">SWAY & DASH SYSTEM</div>
+                <div class="dash-slots-row">
+                    <!-- 앞 대시 -->
+                    <div class="dash-slot is-ready" id="dash-slot-forward">
+                        <div class="dash-icon-box">
+                            <svg class="dash-svg" viewBox="0 0 32 32">
+                                <defs>
+                                    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#ffffff"/>
+                                        <stop offset="100%" stop-color="#00e5ff"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M16 4 L26 15 L20 15 L20 28 L12 28 L12 15 L6 15 Z" fill="url(#cyanGrad)" />
+                                <line x1="8" y1="21" x2="24" y2="21" stroke="#00ffff" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                                <line x1="10" y1="25" x2="22" y2="25" stroke="#00ffff" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                            </svg>
+                            <div class="dash-cd-mask" id="dash-mask-forward"></div>
+                            <div class="dash-cd-text" id="dash-text-forward">READY</div>
+                        </div>
+                        <div class="dash-label-box">
+                            <span class="dash-badge">Q / 더블W / Ctrl</span>
+                            <span class="dash-name">앞 대시</span>
+                        </div>
+                    </div>
+
+                    <!-- 옆 대시 -->
+                    <div class="dash-slot is-ready" id="dash-slot-side">
+                        <div class="dash-icon-box">
+                            <svg class="dash-svg" viewBox="0 0 32 32">
+                                <defs>
+                                    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#ffffff"/>
+                                        <stop offset="100%" stop-color="#ffaa00"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M13 8 L5 16 L13 24 L13 18 L16 18 L16 14 L13 14 Z" fill="url(#goldGrad)" />
+                                <path d="M19 8 L27 16 L19 24 L19 18 L16 18 L16 14 L19 14 Z" fill="url(#goldGrad)" />
+                                <circle cx="16" cy="16" r="2" fill="#fff" />
+                            </svg>
+                            <div class="dash-cd-mask" id="dash-mask-side"></div>
+                            <div class="dash-cd-text" id="dash-text-side">READY</div>
+                        </div>
+                        <div class="dash-label-box">
+                            <span class="dash-badge">A,D+Q / AA,DD</span>
+                            <span class="dash-name">옆 대시</span>
+                        </div>
+                    </div>
+
+                    <!-- 뒤 대시 -->
+                    <div class="dash-slot is-ready" id="dash-slot-back">
+                        <div class="dash-icon-box">
+                            <svg class="dash-svg" viewBox="0 0 32 32">
+                                <defs>
+                                    <linearGradient id="redGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#ffffff"/>
+                                        <stop offset="100%" stop-color="#ff2a6d"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M16 28 L6 17 L12 17 L12 4 L20 4 L20 17 L26 17 Z" fill="url(#redGrad)" />
+                                <line x1="8" y1="11" x2="24" y2="11" stroke="#ff2a6d" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                                <line x1="10" y1="7" x2="22" y2="7" stroke="#ff2a6d" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+                            </svg>
+                            <div class="dash-cd-mask" id="dash-mask-back"></div>
+                            <div class="dash-cd-text" id="dash-text-back">READY</div>
+                        </div>
+                        <div class="dash-label-box">
+                            <span class="dash-badge">S+Q / 더블S</span>
+                            <span class="dash-name">뒤 대시</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ==========================================
+        // 0. 사운드 신시사이저 (Web Audio API - 최적화 & 노드 누수 방지)
+        // ==========================================
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioClass) audioCtx = new AudioClass();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            if (type === 'whoosh') { // 주먹 휘두름
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(60, now + 0.12);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+                osc.start(now);
+                osc.stop(now + 0.12);
+            } else if (type === 'hit') { // 일반 타격
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(160, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+                gain.gain.setValueAtTime(0.7, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+                osc.start(now);
+                osc.stop(now + 0.15);
+
+                // 스파크 고주파 클릭음
+                const click = ctx.createOscillator();
+                const clickGain = ctx.createGain();
+                click.type = 'square';
+                click.frequency.setValueAtTime(800, now);
+                click.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+                clickGain.gain.setValueAtTime(0.2, now);
+                clickGain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                click.connect(clickGain);
+                clickGain.connect(ctx.destination);
+                click.onended = () => { click.disconnect(); clickGain.disconnect(); };
+                click.start(now);
+                click.stop(now + 0.05);
+            } else if (type === 'heavy_hit') { // 4타 피니시
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(20, now + 0.35);
+                gain.gain.setValueAtTime(0.9, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'slam') { // 히트액션 바닥 메치기
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+                gain.gain.setValueAtTime(1.0, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'dash') { // 쾌속 대시 공기 가르는 소리
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.18);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+                osc.start(now);
+                osc.stop(now + 0.18);
+
+                // 바람 파열음 (화이트 노이즈 버스트)
+                try {
+                    const bufferSize = Math.floor(ctx.sampleRate * 0.12);
+                    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
+                    }
+                    const noise = ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const filter = ctx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(800, now);
+                    filter.frequency.exponentialRampToValueAtTime(200, now + 0.12);
+                    const noiseGain = ctx.createGain();
+                    noiseGain.gain.setValueAtTime(0.25, now);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    noise.connect(filter);
+                    filter.connect(noiseGain);
+                    noiseGain.connect(ctx.destination);
+                    noise.start(now);
+                } catch(e) {}
+            } else if (type === 'dash_ready') { // 쿨타임 완료 챠링음
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(1320, now + 0.08);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.10);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+                osc.start(now);
+                osc.stop(now + 0.10);
+            }
+        }
+
+        // ==========================================
+        // 1. 씬, 카메라, 렌더러 & 블룸 세팅 (고성능 최적화)
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x060814, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 200);
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(1); // 60+ FPS 칼고정 성능 최적화
+        renderer.shadowMap.enabled = false; // 기본: 60+ FPS 칼고정 및 GPU 제로 부하를 위해 그림자 패스 완전 비활성화
+        renderer.shadowMap.type = THREE.BasicShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // 달빛 / 전역 방향광 (가벼운 512 해상도로 모바일/내장 그래픽 최적화)
+        const moonLight = new THREE.DirectionalLight(0x88aaff, 1.8);
+        moonLight.position.set(15, 35, 20);
+        moonLight.castShadow = false;
+        moonLight.shadow.mapSize.width = 512;
+        moonLight.shadow.mapSize.height = 512;
+        moonLight.shadow.camera.near = 10;
+        moonLight.shadow.camera.far = 70;
+        moonLight.shadow.camera.left = -18;
+        moonLight.shadow.camera.right = 18;
+        moonLight.shadow.camera.top = 25;
+        moonLight.shadow.camera.bottom = -25;
+        moonLight.shadow.bias = -0.0008;
+        scene.add(moonLight);
+
+        // 네온 블룸 포스트프로세싱 및 품질 프리셋 시스템 (기본: 초고속 다이렉트 렌더)
+        let currentQualityMode = 0;
+        const qualityModes = [
+            { name: "⚡ 초고속 60FPS (렉 제로)", useBloom: false, shadow: false },
+            { name: "✨ 극(極) 네온 블룸 모드", useBloom: true, bloomResRatio: 0.5, bloomStrength: 1.1, shadow: true }
+        ];
+
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(Math.floor(window.innerWidth * 0.5), Math.floor(window.innerHeight * 0.5)),
+            1.1, 0.4, 0.85
+        );
+        bloomPass.threshold = 0.28;
+        bloomPass.strength = 1.1;
+        bloomPass.radius = 0.5;
+
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        function setQualityMode(modeIdx) {
+            currentQualityMode = modeIdx % qualityModes.length;
+            const mode = qualityModes[currentQualityMode];
+            bloomPass.enabled = mode.useBloom;
+            renderer.shadowMap.enabled = mode.shadow;
+            moonLight.castShadow = mode.shadow; // 초고속 모드에서는 무거운 그림자 계산을 패스하여 60FPS 보장
+            if (mode.useBloom) {
+                bloomPass.strength = mode.bloomStrength;
+                bloomPass.setSize(
+                    Math.floor(window.innerWidth * mode.bloomResRatio),
+                    Math.floor(window.innerHeight * mode.bloomResRatio)
+                );
+            }
+            const btn = document.getElementById('perf-toggle-btn');
+            if (btn) btn.innerText = mode.name;
+        }
+        setQualityMode(0);
+
+        // 조명 시스템 (신주쿠 밤거리 네온 분위기 최적화)
+        const ambientLight = new THREE.AmbientLight(0x35384e, 2.4);
+        scene.add(ambientLight);
+
+        // 적과 플레이어를 비추는 전면 스포트라이트 / 조명
+        const fightLight = new THREE.PointLight(0xffeedd, 40, 15);
+        fightLight.position.set(0, 5, 1);
+        scene.add(fightLight);
+
+        // 거리 가로등 네온 포인트 라이트들
+        const streetLight1 = new THREE.PointLight(0xff0055, 80, 25);
+        streetLight1.position.set(-6, 6, -2);
+        scene.add(streetLight1);
+
+        const streetLight2 = new THREE.PointLight(0x00d9ff, 80, 25);
+        streetLight2.position.set(6, 6, -2);
+        scene.add(streetLight2);
+
+        // ==========================================
+        // 2. 절차적 마인크래프트 픽셀 텍스처 생성기 & 캐시 시스템 (VRAM 및 생성 지연 최적화)
+        // ==========================================
+        const pixelTextureCache = new Map();
+        function createPixelTexture(baseColorHex, noise = 0.15, border = true) {
+            const cacheKey = `${baseColorHex}_${noise}_${border}`;
+            if (pixelTextureCache.has(cacheKey)) {
+                return pixelTextureCache.get(cacheKey);
+            }
+
+            const size = 16;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            const baseColor = new THREE.Color(baseColorHex);
+
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    const n = (Math.random() - 0.5) * noise;
+                    const r = Math.min(1, Math.max(0, baseColor.r + n));
+                    const g = Math.min(1, Math.max(0, baseColor.g + n));
+                    const b = Math.min(1, Math.max(0, baseColor.b + n));
+
+                    ctx.fillStyle = `rgb(${Math.floor(r * 255)}, ${Math.floor(g * 255)}, ${Math.floor(b * 255)})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+
+            if (border) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+                ctx.fillRect(0, 0, size, 1);
+                ctx.fillRect(0, 0, 1, size);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+                ctx.fillRect(0, size - 1, size, 1);
+                ctx.fillRect(size - 1, 0, 1, size);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter; // 마인크래프트 선명한 픽셀 보존!
+            texture.minFilter = THREE.NearestFilter;
+            pixelTextureCache.set(cacheKey, texture);
+            return texture;
+        }
+
+        // 마인크래프트 얼굴 텍스처 (16x16 픽셀 정밀 페인팅)
+        function createFaceTexture(isPlayer) {
+            const size = 16;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // 피부 베이스
+            ctx.fillStyle = isPlayer ? '#ffd1b3' : '#f5c3a3';
+            ctx.fillRect(0, 0, size, size);
+
+            if (isPlayer) {
+                // 키류 스타일: 정갈한 올백 헤어라인, 강렬한 눈썹, 수염
+                ctx.fillStyle = '#111115';
+                // 앞머리 헤어라인
+                ctx.fillRect(0, 0, 16, 4);
+                // 짙은 갈매기 눈썹
+                ctx.fillRect(2, 6, 4, 1);
+                ctx.fillRect(10, 6, 4, 1);
+
+                // 눈 (흰자 + 갈색/검은 동공)
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(2, 7, 4, 2);
+                ctx.fillRect(10, 7, 4, 2);
+                ctx.fillStyle = '#1c1c1f';
+                ctx.fillRect(4, 7, 2, 2);
+                ctx.fillRect(10, 7, 2, 2);
+
+                // 코 명암
+                ctx.fillStyle = '#e0a98b';
+                ctx.fillRect(7, 9, 2, 2);
+
+                // 다문 입술 & 턱수염
+                ctx.fillStyle = '#a66b53';
+                ctx.fillRect(6, 12, 4, 1);
+                ctx.fillStyle = 'rgba(20,20,20,0.3)';
+                ctx.fillRect(5, 13, 6, 1); // 턱수염 라인
+            } else {
+                // 마지마 / 보스 스타일: 한쪽 안대(Eye-patch), 콧수염, 장난기 넘치는 눈
+                ctx.fillStyle = '#151518';
+                ctx.fillRect(0, 0, 16, 4); // 앞머리
+
+                // 오른쪽 눈은 안대
+                ctx.fillStyle = '#0a0a0c';
+                ctx.fillRect(2, 6, 5, 4);
+                ctx.fillStyle = '#333338';
+                ctx.fillRect(1, 7, 1, 1); // 안대 끈
+
+                // 왼쪽 눈 (날카로운 눈매)
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(10, 7, 4, 2);
+                ctx.fillStyle = '#8b0000'; // 붉은 안광
+                ctx.fillRect(11, 7, 2, 2);
+
+                // 콧수염 & 사악한 미소
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(6, 11, 4, 1);
+                ctx.fillStyle = '#800000';
+                ctx.fillRect(6, 13, 4, 1);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            texture.minFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        // ==========================================
+        // 3. 고품질 마인크래프트 복셀 캐릭터 팩토리
+        // (단일 박스가 아닌, 수많은 3D 블록 레이어 조합!)
+        // ==========================================
+        function createMinecraftVoxelCharacter(isPlayer) {
+            const root = new THREE.Group();
+
+            // 초고속 경량 마테리얼 (마인크래프트 고유의 선명한 램버트 디퓨즈 셰이더 적용 - GPU 부하 80% 절감)
+            const skinTex = createPixelTexture(isPlayer ? 0xffd1b3 : 0xf5c3a3, 0.08);
+            const skinMat = new THREE.MeshLambertMaterial({ map: skinTex });
+
+            const hairTex = createPixelTexture(0x15161c, 0.05);
+            const hairMat = new THREE.MeshLambertMaterial({ map: hairTex });
+
+            // 의상 마테리얼
+            const suitTex = isPlayer 
+                ? createPixelTexture(0x737682, 0.08)  // 키류 그레이 정장
+                : createPixelTexture(0x1f1f26, 0.08); // 보스 블랙 레더
+            const suitMat = new THREE.MeshLambertMaterial({ map: suitTex });
+
+            const shirtTex = isPlayer 
+                ? createPixelTexture(0x8a0e22, 0.1)   // 키류 버건디 오픈 와이셔츠
+                : createPixelTexture(0xcaa135, 0.15); // 보스 골드 뱀가죽 이너
+            const shirtMat = new THREE.MeshLambertMaterial({ map: shirtTex });
+
+            const goldMat = new THREE.MeshLambertMaterial({ color: 0xffcc00 });
+            const shoeMat = new THREE.MeshLambertMaterial({ color: 0x111114 });
+
+            // 박스 헬퍼
+            function makeBox(w, h, d, mat, cast = false) {
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                mesh.castShadow = cast;
+                mesh.receiveShadow = false;
+                return mesh;
+            }
+
+            // 1. 골반 (Hips / Pelvis)
+            const hips = new THREE.Group();
+            hips.position.y = 1.35;
+            root.add(hips);
+
+            const beltMesh = makeBox(0.84, 0.22, 0.44, new THREE.MeshLambertMaterial({ color: 0x111115 }));
+            hips.add(beltMesh);
+            const beltBuckle = makeBox(0.2, 0.14, 0.48, goldMat);
+            beltMesh.add(beltBuckle);
+
+            // 2. 몸통 (Torso / Chest)
+            const torso = new THREE.Group();
+            torso.position.y = 0.55;
+            hips.add(torso);
+
+            // 코어 셔츠
+            const torsoCore = makeBox(0.8, 0.9, 0.4, shirtMat);
+            torso.add(torsoCore);
+
+            // 정장 외투 레이어드 (앞섶 좌/우 입체 블록)
+            const jacketLeft = makeBox(0.3, 0.92, 0.44, suitMat);
+            jacketLeft.position.set(-0.28, 0, 0);
+            torso.add(jacketLeft);
+
+            const jacketRight = makeBox(0.3, 0.92, 0.44, suitMat);
+            jacketRight.position.set(0.28, 0, 0);
+            torso.add(jacketRight);
+
+            // 입체 칼라(옷깃) 큐브
+            const collarL = makeBox(0.12, 0.24, 0.46, isPlayer ? shirtMat : goldMat);
+            collarL.position.set(-0.16, 0.36, 0.04);
+            collarL.rotation.z = 0.3;
+            torso.add(collarL);
+
+            const collarR = makeBox(0.12, 0.24, 0.46, isPlayer ? shirtMat : goldMat);
+            collarR.position.set(0.16, 0.36, 0.04);
+            collarR.rotation.z = -0.3;
+            torso.add(collarR);
+
+            // 금목걸이 블록
+            const chain = makeBox(0.24, 0.06, 0.44, goldMat);
+            chain.position.set(0, 0.28, 0.01);
+            torso.add(chain);
+
+            // 3. 머리 (Head)
+            const headGroup = new THREE.Group();
+            headGroup.position.y = 0.65;
+            torso.add(headGroup);
+
+            // 얼굴 큐브 (전면 페이스 텍스처 적용)
+            const faceMaterials = [
+                suitMat, suitMat, suitMat, suitMat,
+                new THREE.MeshLambertMaterial({ map: createFaceTexture(isPlayer) }), // 앞면
+                hairMat // 뒷면
+            ];
+            const headCore = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), faceMaterials);
+            headCore.castShadow = false;
+            headGroup.add(headCore);
+
+            // 입체 머리카락 블록들 (3D Hair Strands - 올백 볼륨)
+            const hairTop = makeBox(0.74, 0.18, 0.74, hairMat);
+            hairTop.position.set(0, 0.35, -0.02);
+            headGroup.add(hairTop);
+
+            const hairBack = makeBox(0.74, 0.65, 0.16, hairMat);
+            hairBack.position.set(0, 0.02, -0.34);
+            headGroup.add(hairBack);
+
+            // 입체 구레나룻 & 옆머리
+            const hairSideL = makeBox(0.12, 0.5, 0.6, hairMat);
+            hairSideL.position.set(-0.35, 0.1, -0.05);
+            headGroup.add(hairSideL);
+
+            const hairSideR = makeBox(0.12, 0.5, 0.6, hairMat);
+            hairSideR.position.set(0.35, 0.1, -0.05);
+            headGroup.add(hairSideR);
+
+            // 입체 코 블록
+            const nose = makeBox(0.1, 0.12, 0.1, skinMat);
+            nose.position.set(0, -0.05, 0.38);
+            headGroup.add(nose);
+
+            // 4. 양팔 (Arms)
+            function createLimbArm(side) {
+                const pivot = new THREE.Group();
+                pivot.position.set(side * 0.58, 0.38, 0);
+
+                // 어깨 패드 (입체 큐브)
+                const shoulder = makeBox(0.42, 0.22, 0.44, suitMat);
+                shoulder.position.y = -0.05;
+                pivot.add(shoulder);
+
+                // 소매 (Arm)
+                const armMesh = makeBox(0.36, 0.7, 0.38, suitMat);
+                armMesh.position.y = -0.45;
+                pivot.add(armMesh);
+
+                // 셔츠 커프스 흰색 삐져나온 디테일 블록
+                const cuff = makeBox(0.38, 0.08, 0.4, new THREE.MeshLambertMaterial({ color: 0xeeeeee }));
+                cuff.position.y = -0.75;
+                pivot.add(cuff);
+
+                // 손 (주먹 복셀)
+                const hand = makeBox(0.34, 0.26, 0.34, skinMat);
+                hand.position.y = -0.9;
+                pivot.add(hand);
+
+                // 엄지 손가락 블록
+                const thumb = makeBox(0.1, 0.12, 0.14, skinMat);
+                thumb.position.set(-side * 0.14, -0.86, 0.1);
+                pivot.add(thumb);
+
+                return { pivot, hand };
+            }
+
+            const leftArmData = createLimbArm(-1);
+            const rightArmData = createLimbArm(1);
+            torso.add(leftArmData.pivot);
+            torso.add(rightArmData.pivot);
+
+            // 5. 양다리 (Legs - 단정하고 깔끔한 11자 다리, 벌어짐 없는 마인크래프트 완벽 밀착)
+            function createLimbLeg(side) {
+                const pivot = new THREE.Group();
+                pivot.position.set(side * 0.19, -0.1, 0);
+
+                // 바지 다리 (Pants Leg - 폭 0.38로 가운데 틈새 없이 완벽한 11자 밀착)
+                const legMesh = makeBox(0.38, 0.95, 0.38, suitMat);
+                legMesh.position.y = -0.48;
+                pivot.add(legMesh);
+
+                // 구두 (Shoe - 앞코가 튀어나온 입체 복셀)
+                const shoe = makeBox(0.39, 0.22, 0.44, shoeMat);
+                shoe.position.set(0, -0.95, 0.03);
+                pivot.add(shoe);
+
+                return { pivot };
+            }
+
+            const leftLegData = createLimbLeg(-1);
+            const rightLegData = createLimbLeg(1);
+            hips.add(leftLegData.pivot);
+            hips.add(rightLegData.pivot);
+
+            // 피격 시 빨갛게 번쩍이는(Damage Flash) 머티리얼 제어 (프레임 델타 기반 안전 타이머)
+            const allMeshes = [];
+            root.traverse(child => {
+                if (child.isMesh) {
+                    allMeshes.push({
+                        mesh: child,
+                        origMat: child.material
+                    });
+                }
+            });
+
+            const damageMat = new THREE.MeshBasicMaterial({ color: 0xff1122 });
+            root.flashTimer = 0;
+
+            root.flashRed = function() {
+                root.flashTimer = 0.12;
+                allMeshes.forEach(item => {
+                    item.mesh.material = damageMat;
+                });
+            };
+
+            root.updateFlash = function(dt) {
+                if (root.flashTimer > 0) {
+                    root.flashTimer -= dt;
+                    if (root.flashTimer <= 0) {
+                        allMeshes.forEach(item => {
+                            item.mesh.material = item.origMat;
+                        });
+                    }
+                }
+            };
+
+            root.parts = {
+                hips,
+                torso,
+                head: headGroup,
+                leftArm: leftArmData.pivot,
+                rightArm: rightArmData.pivot,
+                leftHand: leftArmData.hand,
+                rightHand: rightArmData.hand,
+                leftLeg: leftLegData.pivot,
+                rightLeg: rightLegData.pivot
+            };
+
+            return root;
+        }
+
+        // ==========================================
+        // 4. 마인크래프트 복셀 카무로초 도시 맵 생성
+        // ==========================================
+        function createMinecraftKamurochoCity() {
+            const city = new THREE.Group();
+
+            // 1. 도로 & 보도블록 지면
+            const asphaltTex = createPixelTexture(0x181a20, 0.12);
+            asphaltTex.wrapS = THREE.RepeatWrapping;
+            asphaltTex.wrapT = THREE.RepeatWrapping;
+            asphaltTex.repeat.set(20, 40);
+
+            const floorMat = new THREE.MeshLambertMaterial({
+                map: asphaltTex
+            });
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 160), floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = false;
+            city.add(floor);
+
+            // 차선 블록들 (InstancedMesh로 단 1회의 드로우 콜 렌더링!)
+            const yellowTex = createPixelTexture(0xf5a623, 0.05);
+            const whiteTex = createPixelTexture(0xdddddd, 0.05);
+
+            const centerLineGeo = new THREE.BoxGeometry(0.3, 0.05, 2.5);
+            const centerLineMat = new THREE.MeshLambertMaterial({ map: yellowTex });
+            const centerLines = new THREE.InstancedMesh(centerLineGeo, centerLineMat, 40);
+            let cIdx = 0;
+            const instDummy = new THREE.Object3D();
+
+            for (let z = -60; z <= 60; z += 4) {
+                instDummy.position.set(0, 0.02, z);
+                instDummy.rotation.set(0, 0, 0);
+                instDummy.scale.set(1, 1, 1);
+                instDummy.updateMatrix();
+                centerLines.setMatrixAt(cIdx++, instDummy.matrix);
+            }
+            centerLines.count = cIdx;
+            centerLines.instanceMatrix.needsUpdate = true;
+            city.add(centerLines);
+
+            // 횡단보도 블록 (InstancedMesh로 1 Draw Call)
+            const crosswalkGeo = new THREE.BoxGeometry(0.8, 0.05, 5);
+            const crosswalkMat = new THREE.MeshLambertMaterial({ map: whiteTex });
+            const crosswalkMesh = new THREE.InstancedMesh(crosswalkGeo, crosswalkMat, 15);
+            let cwIdx = 0;
+            for (let x = -5; x <= 5; x += 1.4) {
+                instDummy.position.set(x, 0.02, -15);
+                instDummy.rotation.set(0, 0, 0);
+                instDummy.scale.set(1, 1, 1);
+                instDummy.updateMatrix();
+                crosswalkMesh.setMatrixAt(cwIdx++, instDummy.matrix);
+            }
+            crosswalkMesh.count = cwIdx;
+            crosswalkMesh.instanceMatrix.needsUpdate = true;
+            city.add(crosswalkMesh);
+
+            // 2. 보도블록 인도 (양옆 턱 있는 보행로)
+            const curbTex = createPixelTexture(0x404452, 0.08);
+            const sidewalkL = new THREE.Mesh(new THREE.BoxGeometry(10, 0.3, 160), new THREE.MeshLambertMaterial({ map: curbTex }));
+            sidewalkL.position.set(-11, 0.15, 0);
+            sidewalkL.receiveShadow = false;
+            city.add(sidewalkL);
+
+            const sidewalkR = new THREE.Mesh(new THREE.BoxGeometry(10, 0.3, 160), new THREE.MeshLambertMaterial({ map: curbTex }));
+            sidewalkR.position.set(11, 0.15, 0);
+            sidewalkR.receiveShadow = false;
+            city.add(sidewalkR);
+
+            // 3. 네온사인 텍스처 생성기
+            function createNeonCanvas(text, fontColor, bgColor='#080811') {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = bgColor;
+                ctx.fillRect(0, 0, 256, 128);
+
+                ctx.strokeStyle = fontColor;
+                ctx.lineWidth = 6;
+                ctx.strokeRect(6, 6, 244, 116);
+
+                ctx.fillStyle = fontColor;
+                ctx.font = 'bold 50px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(text, 128, 64);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.magFilter = THREE.NearestFilter;
+                return tex;
+            }
+
+            // 4. 빌딩들 (마인크래프트 복셀 빌딩 군집)
+            const buildingColors = [0x12141c, 0x1a1e28, 0x15151f, 0x242836];
+            const neonSignsData = [
+                { text: '極 KIWAMI', color: '#ff2244', lightColor: 0xff2244 },
+                { text: '神室町', color: '#00e5ff', lightColor: 0x00e5ff },
+                { text: 'カラオケ', color: '#ff00bb', lightColor: 0xff00bb },
+                { text: 'ラーメン', color: '#ff9900', lightColor: 0xff9900 },
+                { text: 'BAR SERENA', color: '#3388ff', lightColor: 0x3388ff },
+                { text: 'CLUB SEGA', color: '#00ff88', lightColor: 0x00ff88 },
+                { text: 'パチンコ', color: '#ffdd00', lightColor: 0xffdd00 }
+            ];
+
+            // 공유 지오메트리 & 머티리얼 (모든 창문과 실외기를 InstancedMesh로 단 2회의 드로우 콜로 압축!)
+            const sharedWindowGeo = new THREE.BoxGeometry(0.2, 1.8, 1.8);
+            const sharedWindowMat = new THREE.MeshBasicMaterial({ map: createPixelTexture(0xffea88, 0.2) });
+            const windowInstancedMesh = new THREE.InstancedMesh(sharedWindowGeo, sharedWindowMat, 900);
+            let winIdx = 0;
+
+            const sharedAcGeo = new THREE.BoxGeometry(2, 1.8, 2);
+            const sharedAcMat = new THREE.MeshLambertMaterial({ map: createPixelTexture(0x555866, 0.1) });
+            const acInstancedMesh = new THREE.InstancedMesh(sharedAcGeo, sharedAcMat, 30);
+            let acIdx = 0;
+
+            let signIdx = 0;
+            [-1, 1].forEach(side => {
+                for (let z = -55; z <= 55; z += 18) {
+                    const width = 8 + Math.random() * 4;
+                    const height = 18 + Math.random() * 20;
+                    const depth = 14 + Math.random() * 4;
+                    const xPos = side * (16 + width / 2);
+
+                    const bMat = new THREE.MeshLambertMaterial({
+                        map: createPixelTexture(buildingColors[Math.floor(Math.random() * buildingColors.length)], 0.1)
+                    });
+
+                    const building = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), bMat);
+                    building.position.set(xPos, height / 2, z);
+                    building.receiveShadow = false;
+                    city.add(building);
+
+                    // 창문 그리드 블록 (InstancedMesh에 등록 - 추가 드로우 콜 0)
+                    for (let wy = 3; wy < height - 2; wy += 4) {
+                        for (let wz = -depth/2 + 2; wz <= depth/2 - 2; wz += 3) {
+                            if (Math.random() > 0.4 && winIdx < 900) {
+                                instDummy.position.set(xPos + side * (-width/2 - 0.1), wy, z + wz);
+                                instDummy.rotation.set(0, 0, 0);
+                                instDummy.scale.set(1, 1, 1);
+                                instDummy.updateMatrix();
+                                windowInstancedMesh.setMatrixAt(winIdx++, instDummy.matrix);
+                            }
+                        }
+                    }
+
+                    // 네온사인 부착
+                    const signInfo = neonSignsData[signIdx % neonSignsData.length];
+                    signIdx++;
+
+                    const signTex = createNeonCanvas(signInfo.text, signInfo.color);
+                    const signMesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.3, 3.5, 7.5),
+                        new THREE.MeshBasicMaterial({ map: signTex })
+                    );
+                    signMesh.position.set(side * (-width/2 - 0.2), 6, 0);
+                    building.add(signMesh);
+
+                    // 옥상 실외기 (InstancedMesh에 등록)
+                    if (acIdx < 30) {
+                        instDummy.position.set(xPos + (Math.random()-0.5)*3, height + 0.9, z + (Math.random()-0.5)*3);
+                        instDummy.rotation.set(0, 0, 0);
+                        instDummy.scale.set(1, 1, 1);
+                        instDummy.updateMatrix();
+                        acInstancedMesh.setMatrixAt(acIdx++, instDummy.matrix);
+                    }
+                }
+            });
+
+            windowInstancedMesh.count = winIdx;
+            windowInstancedMesh.instanceMatrix.needsUpdate = true;
+            city.add(windowInstancedMesh);
+
+            acInstancedMesh.count = acIdx;
+            acInstancedMesh.instanceMatrix.needsUpdate = true;
+            city.add(acInstancedMesh);
+
+            // 5. 카무로초 텐카이치 거리 아치 네온 게이트 (Kamurocho Arch)
+            const arch = new THREE.Group();
+            arch.position.set(0, 0, -35);
+
+            const redGateMat = new THREE.MeshLambertMaterial({
+                map: createPixelTexture(0xcc1122, 0.05)
+            });
+            const pL = new THREE.Mesh(new THREE.BoxGeometry(1.6, 11, 1.6), redGateMat);
+            pL.position.set(-6.5, 5.5, 0);
+            arch.add(pL);
+
+            const pR = new THREE.Mesh(new THREE.BoxGeometry(1.6, 11, 1.6), redGateMat);
+            pR.position.set(6.5, 5.5, 0);
+            arch.add(pR);
+
+            const topBar = new THREE.Mesh(new THREE.BoxGeometry(15, 2.2, 2.2), redGateMat);
+            topBar.position.set(0, 10.5, 0);
+            arch.add(topBar);
+
+            // 게이트 전면 네온 글씨 "神室町 天下一通り"
+            const archSignTex = createNeonCanvas('神室町 天下一通り', '#ffff00', '#aa0011');
+            const archSign = new THREE.Mesh(
+                new THREE.BoxGeometry(11, 1.6, 0.2),
+                new THREE.MeshBasicMaterial({ map: archSignTex })
+            );
+            archSign.position.set(0, 10.5, 1.15);
+            arch.add(archSign);
+
+            const archLight = new THREE.PointLight(0xff2200, 80, 20);
+            archLight.position.set(0, 10, 2);
+            arch.add(archLight);
+            city.add(arch);
+
+            // 6. 길거리 디테일 (일본 음료 자판기 & 가로등)
+            function createVendingMachine(x, z, rot) {
+                const vm = new THREE.Group();
+                vm.position.set(x, 0.3, z);
+                vm.rotation.y = rot;
+
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.4, 2.4, 0.9),
+                    new THREE.MeshLambertMaterial({ map: createPixelTexture(0xdd1122, 0.1) })
+                );
+                body.position.y = 1.2;
+                vm.add(body);
+
+                // 유리 디스플레이
+                const glass = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.2, 1.1, 0.1),
+                    new THREE.MeshBasicMaterial({ color: 0xeeffff })
+                );
+                glass.position.set(0, 1.5, 0.46);
+                vm.add(glass);
+
+                city.add(vm);
+            }
+            createVendingMachine(-6.2, 5, Math.PI / 2);
+            createVendingMachine(-6.2, 8, Math.PI / 2);
+            createVendingMachine(6.2, -5, -Math.PI / 2);
+
+            // 가로등 기둥
+            function createStreetLamp(x, z) {
+                const lamp = new THREE.Group();
+                lamp.position.set(x, 0.3, z);
+
+                const pole = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.3, 6, 0.3),
+                    new THREE.MeshLambertMaterial({ color: 0x22242a })
+                );
+                pole.position.y = 3;
+                lamp.add(pole);
+
+                const head = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.8, 0.4, 1.2),
+                    new THREE.MeshBasicMaterial({ color: 0xfff0aa })
+                );
+                head.position.set(0, 6, 0.4);
+                lamp.add(head);
+
+                city.add(lamp);
+            }
+            createStreetLamp(-6.5, -20);
+            createStreetLamp(6.5, -20);
+            createStreetLamp(-6.5, 20);
+            createStreetLamp(6.5, 20);
+
+            return city;
+        }
+
+        const city = createMinecraftKamurochoCity();
+        scene.add(city);
+
+        // ==========================================
+        // 5. 마인크래프트 비 & 크리티컬 파티클
+        // ==========================================
+        // 비 (Rain Particles - 최적화)
+        const rainCount = 350;
+        const rainGeo = new THREE.BufferGeometry();
+        const rainPos = new Float32Array(rainCount * 3);
+        for (let i = 0; i < rainCount; i++) {
+            rainPos[i * 3] = (Math.random() - 0.5) * 50;
+            rainPos[i * 3 + 1] = Math.random() * 25;
+            rainPos[i * 3 + 2] = (Math.random() - 0.5) * 60;
+        }
+        rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+        const rainMat = new THREE.PointsMaterial({
+            color: 0x99bbff,
+            size: 0.16,
+            transparent: true,
+            opacity: 0.55
+        });
+        const rainSystem = new THREE.Points(rainGeo, rainMat);
+        scene.add(rainSystem);
+
+        // 마인크래프트 고유의 크리티컬 히트 별(Star) 파티클 시스템
+        const starParticleCount = 150;
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = new Float32Array(starParticleCount * 3);
+        const starVel = [];
+        for (let i = 0; i < starParticleCount; i++) {
+            starPos[i * 3] = 0;
+            starPos[i * 3 + 1] = -100;
+            starPos[i * 3 + 2] = 0;
+            starVel.push(new THREE.Vector3());
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+
+        // 십자/별 모양 마크 텍스처
+        function createStarCanvas() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 16;
+            canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ff9900';
+            ctx.fillRect(7, 2, 2, 12);
+            ctx.fillRect(2, 7, 12, 2);
+            ctx.fillStyle = '#ffdd44';
+            ctx.fillRect(6, 6, 4, 4);
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.magFilter = THREE.NearestFilter;
+            return tex;
+        }
+
+        const starMat = new THREE.PointsMaterial({
+            map: createStarCanvas(),
+            size: 0.55,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const starParticles = new THREE.Points(starGeo, starMat);
+        scene.add(starParticles);
+
+        let activeStarCount = 0;
+        function emitMinecraftCriticalHit(pos, count = 35, isSuper = false) {
+            const positions = starGeo.attributes.position.array;
+            for (let i = 0; i < count; i++) {
+                const idx = (activeStarCount + i) % starParticleCount;
+                positions[idx * 3] = pos.x + (Math.random() - 0.5) * 0.4;
+                positions[idx * 3 + 1] = pos.y + (Math.random() - 0.5) * 0.4;
+                positions[idx * 3 + 2] = pos.z + (Math.random() - 0.5) * 0.4;
+
+                const speed = isSuper ? 6.5 : 3.8;
+                starVel[idx].set(
+                    (Math.random() - 0.5) * speed,
+                    Math.random() * speed * 0.9 + 1.2,
+                    (Math.random() - 0.5) * speed
+                );
+            }
+            activeStarCount = (activeStarCount + count) % starParticleCount;
+            starGeo.attributes.position.needsUpdate = true;
+        }
+
+        // ==========================================
+        // 5-B. 공격 궤적 슬래시 & 타격 충격파 & 복셀 블록 파편 VFX
+        // ==========================================
+        // 1. 공격 스윙 슬래시 궤적 (Attack Slash Trail - 박력 넘치는 곡선 검기/타격 궤적)
+        const slashGeo = new THREE.RingGeometry(0.5, 1.6, 32, 1, 0, Math.PI * 0.85);
+        const slashMat = new THREE.MeshBasicMaterial({
+            color: 0x00ffff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        const slashMesh = new THREE.Mesh(slashGeo, slashMat);
+        scene.add(slashMesh);
+        let slashLife = 0;
+
+        function emitAttackSlash(pos, rotY, rotX, colorHex = 0x00ffff, scale = 1.0) {
+            slashMat.color.setHex(colorHex);
+            slashMesh.position.copy(pos);
+            slashMesh.rotation.set(rotX, rotY, 0);
+            slashMesh.scale.set(scale, scale, scale);
+            slashMat.opacity = 1.0;
+            slashLife = 0.22;
+        }
+
+        // 2. 타격 충격파 링 (Impact Shockwave Ring - 화면 하얘짐 방지 및 부드러운 임팩트 링)
+        const shockwaveGeo = new THREE.RingGeometry(0.2, 0.6, 24);
+        const shockwaveMat = new THREE.MeshBasicMaterial({
+            color: 0x00e5ff,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.NormalBlending,
+            depthWrite: false
+        });
+        const shockwaveMesh = new THREE.Mesh(shockwaveGeo, shockwaveMat);
+        shockwaveMesh.visible = false;
+        scene.add(shockwaveMesh);
+        let shockwaveLife = 0;
+
+        function emitShockwaveRing(pos, colorHex = 0x00e5ff) {
+            shockwaveMat.color.setHex(colorHex);
+            shockwaveMesh.position.copy(pos);
+            shockwaveMesh.rotation.set(-camPitch, camYaw, 0);
+            shockwaveMesh.scale.set(0.3, 0.3, 0.3);
+            shockwaveMat.opacity = 0.85;
+            shockwaveLife = 0.16;
+            shockwaveMesh.visible = true;
+        }
+
+        // 3. 복셀 블록 파편 파티클 (Voxel Block Debris)
+        const debrisCount = 60;
+        const debrisGeo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+        const debrisMat = new THREE.MeshLambertMaterial({
+            color: 0xffaa00
+        });
+        const debrisMesh = new THREE.InstancedMesh(debrisGeo, debrisMat, debrisCount);
+        debrisMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        debrisMesh.castShadow = false;
+        debrisMesh.receiveShadow = false;
+        scene.add(debrisMesh);
+
+        const debrisData = [];
+        const debrisDummy = new THREE.Matrix4();
+        for (let i = 0; i < debrisCount; i++) {
+            debrisData.push({
+                pos: new THREE.Vector3(0, -100, 0),
+                vel: new THREE.Vector3(),
+                rot: new THREE.Vector3(),
+                rotSpeed: new THREE.Vector3(),
+                active: false
+            });
+            debrisDummy.setPosition(0, -100, 0);
+            debrisMesh.setMatrixAt(i, debrisDummy);
+        }
+        debrisMesh.instanceMatrix.needsUpdate = true;
+
+        let debrisIdx = 0;
+        function emitVoxelDebris(pos, count = 25, colorHex = 0xffaa00) {
+            debrisMat.color.setHex(colorHex);
+            for (let i = 0; i < count; i++) {
+                const d = debrisData[debrisIdx % debrisCount];
+                debrisIdx++;
+                d.pos.set(
+                    pos.x + (Math.random() - 0.5) * 0.35,
+                    pos.y + (Math.random() - 0.5) * 0.35,
+                    pos.z + (Math.random() - 0.5) * 0.35
+                );
+                d.vel.set(
+                    (Math.random() - 0.5) * 6.0,
+                    Math.random() * 4.5 + 2.0,
+                    (Math.random() - 0.5) * 6.0
+                );
+                d.rot.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                d.rotSpeed.set((Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12, (Math.random() - 0.5) * 12);
+                d.active = true;
+            }
+        }
+
+        // ==========================================
+        // 5-C. 가비지 컬렉션(GC) 방지용 불변 재사용 벡터 & 오일러 풀 (무할당 최적화)
+        // ==========================================
+        const _vForward = new THREE.Vector3();
+        const _vRight = new THREE.Vector3();
+        const _vMoveDir = new THREE.Vector3();
+        const _vTargetPos = new THREE.Vector3();
+        const _vDesiredPos = new THREE.Vector3();
+        const _vLookAtTarget = new THREE.Vector3();
+        const _vSlashPos = new THREE.Vector3();
+        const _vHitPos = new THREE.Vector3();
+        const _vToPlayer = new THREE.Vector3();
+        const _vToEnemy = new THREE.Vector3();
+        const _tempEuler = new THREE.Euler();
+
+        // ==========================================
+        // 6. 캐릭터 스폰 & 게임 상태
+        // ==========================================
+        const player = createMinecraftVoxelCharacter(true);
+        player.position.set(-0.7, 0, 2.8);
+        scene.add(player);
+
+        const enemy = createMinecraftVoxelCharacter(false);
+        enemy.position.set(0.5, 0, -1.2);
+        scene.add(enemy);
+
+        // 적 얼굴/몸을 비추는 전용 라이트
+        const enemyRimLight = new THREE.PointLight(0xffaa55, 30, 8);
+        enemyRimLight.position.set(0.5, 2.5, -0.2);
+        scene.add(enemyRimLight);
+
+        // 게임 스탯
+        let playerHeat = 50;
+        let enemyHp = 100;
+        let comboCount = 0;
+        let comboTimer = null;
+        let isAttacking = false;
+        let enemyKnocked = false;
+        let hitStopDuration = 0;
+        let shakeAmount = 0;
+
+        // 3인칭 고정 카메라 상태 & 포인터 락
+        let camYaw = 0;
+        let camPitch = 0.20;
+        let targetCamYaw = 0;
+        let targetCamPitch = 0.20;
+        let camDist = 6.8; // 사용자 요청: 넓고 쾌적한 화면 거리 (기본 6.8)
+        let targetCamDist = 6.8;
+        let isPointerLocked = false;
+        let isDragging = false;
+        let prevMouseX = 0;
+        let prevMouseY = 0;
+
+        // 마우스 휠로 화면 거리(줌 인/아웃) 자유 조절 가능 (3.8 ~ 12.0)
+        window.addEventListener('wheel', e => {
+            targetCamDist = Math.max(3.8, Math.min(12.0, targetCamDist + e.deltaY * 0.005));
+        }, { passive: true });
+
+        // 캔버스 클릭 시 마우스 포인터 락 요청 (마인크래프트 조작 방식)
+        window.addEventListener('click', () => {
+            if (!document.pointerLockElement) {
+                renderer.domElement.requestPointerLock();
+                try {
+                    if (navigator.keyboard && navigator.keyboard.lock) {
+                        navigator.keyboard.lock(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'ControlLeft', 'ControlRight']).catch(() => {});
+                    }
+                } catch(e) {}
+            }
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = (document.pointerLockElement === renderer.domElement);
+        });
+
+        // 브라우저 탭 실수로 닫히거나 튕기는 현상(Ctrl+W 등) 완벽 방어 가드
+        window.addEventListener('beforeunload', e => {
+            e.preventDefault();
+            e.returnValue = '게임 진행 중입니다. 페이지를 벗어나시겠습니까?';
+            return '게임 진행 중입니다. 페이지를 벗어나시겠습니까?';
+        });
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    try {
+                        if (navigator.keyboard && navigator.keyboard.lock) {
+                            navigator.keyboard.lock(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'KeyQ', 'KeyF', 'ControlLeft', 'ControlRight']).catch(() => {});
+                        }
+                    } catch(err) {}
+                }).catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // 이동 및 액션 입력 (캡처 단계에서 브라우저 기본 단축키 차단 및 Q/Ctrl/더블탭 대시 지원)
+        const keys = {};
+        const lastKeyTime = {};
+        window.addEventListener('keydown', e => {
+            // 1. 브라우저 단축키 가로채기 방지 (Ctrl+W 탭 닫기, Ctrl+R 새로고침, F5 등 브라우저 튕김/초기화 방지)
+            if (e.ctrlKey || e.metaKey || e.code === 'ControlLeft' || e.code === 'ControlRight' || e.key === 'Control') {
+                if (e.code === 'KeyW' || e.code === 'KeyS' || e.code === 'KeyA' || e.code === 'KeyD' || e.code === 'KeyR' || e.code === 'KeyQ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    keys[e.code] = true;
+                    if (e.code === 'KeyW') tryExecuteDash('forward');
+                    else if (e.code === 'KeyS') tryExecuteDash('back');
+                    else if (e.code === 'KeyA') tryExecuteDash('side_left');
+                    else if (e.code === 'KeyD') tryExecuteDash('side_right');
+                    return false;
+                }
+            }
+
+            if (e.code === 'F5' || (e.ctrlKey && e.code === 'KeyR')) {
+                e.preventDefault();
+                return false;
+            }
+
+            // F 키: 전체화면 토글
+            if (e.code === 'KeyF') {
+                e.preventDefault();
+                toggleFullscreen();
+                return;
+            }
+
+            // 2. 더블 탭 대시 감지 (W, S, A, D 연속 2회 탭 시 즉시 해당 방향 대시!)
+            const now = performance.now();
+            if (e.code === 'KeyW' && !keys['KeyW']) {
+                if (now - (lastKeyTime['KeyW'] || 0) < 280) {
+                    tryExecuteDash('forward');
+                }
+                lastKeyTime['KeyW'] = now;
+            } else if (e.code === 'KeyS' && !keys['KeyS']) {
+                if (now - (lastKeyTime['KeyS'] || 0) < 280) {
+                    tryExecuteDash('back');
+                }
+                lastKeyTime['KeyS'] = now;
+            } else if (e.code === 'KeyA' && !keys['KeyA']) {
+                if (now - (lastKeyTime['KeyA'] || 0) < 280) {
+                    tryExecuteDash('side_left');
+                }
+                lastKeyTime['KeyA'] = now;
+            } else if (e.code === 'KeyD' && !keys['KeyD']) {
+                if (now - (lastKeyTime['KeyD'] || 0) < 280) {
+                    tryExecuteDash('side_right');
+                }
+                lastKeyTime['KeyD'] = now;
+            }
+
+            keys[e.code] = true;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                queueOrExecuteAttack();
+            }
+            if (e.code === 'KeyE') {
+                e.preventDefault();
+                queueOrExecuteHeat();
+            }
+
+            // 3. Q 키 또는 Control 단독 탭으로 즉시 대시 발동 (Ctrl+W 충돌 없이 100% 안전)
+            if (e.code === 'KeyQ' || e.code === 'ControlLeft' || e.code === 'ControlRight' || e.key === 'Control') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                tryExecuteDash();
+                return false;
+            }
+        }, { capture: true, passive: false });
+
+        window.addEventListener('keyup', e => {
+            keys[e.code] = false;
+        }, { capture: true });
+
+        window.addEventListener('mousedown', e => {
+            if (e.button === 0) { // 좌클릭 공격
+                queueOrExecuteAttack();
+            } else if (e.button === 2) { // 우클릭 극의
+                e.preventDefault();
+                queueOrExecuteHeat();
+            }
+            if (!isPointerLocked) {
+                isDragging = true;
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            }
+        });
+
+        window.addEventListener('contextmenu', e => e.preventDefault());
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        window.addEventListener('mousemove', e => {
+            if (isPointerLocked) {
+                // 포인터 락 상태: 마우스 이동에 즉각적이고 부드러운 반응
+                targetCamYaw -= e.movementX * 0.0035;
+                targetCamPitch = Math.max(-0.25, Math.min(0.75, targetCamPitch - e.movementY * 0.0035));
+            } else if (isDragging) {
+                // 일반 드래그 상태: 감도를 3배 높이고 쾌적하게 회전
+                const dx = e.clientX - prevMouseX;
+                const dy = e.clientY - prevMouseY;
+                targetCamYaw -= dx * 0.012;
+                targetCamPitch = Math.max(-0.25, Math.min(0.75, targetCamPitch - dy * 0.012));
+                prevMouseX = e.clientX;
+                prevMouseY = e.clientY;
+            }
+        });
+
+        // UI 엘리먼트
+        const comboNumEl = document.getElementById('combo-count');
+        const comboBoxEl = document.getElementById('combo-box');
+        const bossHpBarEl = document.getElementById('boss-hp-bar');
+        const bossHpTextEl = document.getElementById('boss-hp-text');
+        const playerHeatEl = document.getElementById('player-heat');
+        const heatActionPromptEl = document.getElementById('heat-action-prompt');
+        const screenFlashEl = document.getElementById('screen-flash');
+        const heatVignetteEl = document.getElementById('heat-vignette');
+
+        function triggerScreenFlash() {
+            // 사용자 요청: 공격 시 전체 화면이 하얗게 번쩍이는 현상 완전 제거!
+            screenFlashEl.style.opacity = '0';
+        }
+
+        function applyHitStop(seconds) {
+            // 브라우저 프레임 드랍 및 게임 루프 프리징 방지 (타격감은 화면 흔들림 및 파티클로 부드럽게 표현)
+            hitStopDuration = 0;
+        }
+
+        function addShake(amt) {
+            shakeAmount = Math.max(shakeAmount, amt);
+        }
+
+        // ==========================================
+        // 7. 마인크래프트 애니메이션 시스템 (모션 로직)
+        // (유튜브 영상 속 박진감 넘치는 커스텀 모션 재현!)
+        // ==========================================
+        let playerAnimTime = 0;
+        let enemyAnimTime = 0;
+        let activeAttackSeq = null;
+        let attackProgress = 0;
+
+        // 대기(Idle) 모션 계산
+        function applyMinecraftIdle(char, t, isFighter = true) {
+            const breathe = Math.sin(t * 3.5);
+            char.parts.torso.position.y = 0.55 + breathe * 0.02;
+            char.parts.torso.rotation.x = 0.08 + breathe * 0.02; // 약간 수그린 파이팅 스탠스
+
+            char.parts.head.rotation.x = -breathe * 0.02;
+            char.parts.head.rotation.y = 0;
+
+            if (isFighter) {
+                // 야쿠자 파이팅 가드 자세 (가지런한 11자 다리)
+                char.parts.leftArm.rotation.x = -0.7 + Math.sin(t * 3.5 + 0.5) * 0.08;
+                char.parts.leftArm.rotation.y = 0.35;
+                char.parts.leftArm.rotation.z = -0.15;
+
+                char.parts.rightArm.rotation.x = -0.8 + Math.sin(t * 3.5) * 0.08;
+                char.parts.rightArm.rotation.y = -0.3;
+                char.parts.rightArm.rotation.z = 0.15;
+
+                // 다리는 벌어지지 않게 단정한 11자 평행 정렬
+                char.parts.leftLeg.rotation.set(0, 0, 0);
+                char.parts.rightLeg.rotation.set(0, 0, 0);
+            } else {
+                // 적 불량배 건들거리는 대기 모션
+                char.parts.torso.rotation.y = Math.sin(t * 2) * 0.12;
+                char.parts.leftArm.rotation.x = Math.sin(t * 2) * 0.25 - 0.3;
+                char.parts.rightArm.rotation.x = -Math.sin(t * 2) * 0.25 - 0.3;
+                char.parts.leftLeg.rotation.set(0, 0, 0);
+                char.parts.rightLeg.rotation.set(0, 0, 0);
+            }
+        }
+
+        // 쉬프트락(Shift Lock) 스트레이프 모션 (11자 다리 & 어깨 스웨이 역동성 대폭 강화)
+        function applyShiftLockStrafe(char, t, moveX, moveZ, speed) {
+            const freq = speed > 7 ? 18 : 10;
+            const swing = Math.sin(t * freq) * (speed > 7 ? 1.15 : 0.75);
+            const stepExtension = Math.abs(Math.sin(t * freq));
+
+            // 자연스러운 체중 이동 및 상하 바운스 (발이 지면에 디딜 때 무게감 있는 하강)
+            char.parts.hips.position.y = 1.36 - stepExtension * 0.05;
+
+            // 다리는 절대 양옆으로 벌어지지 않게 Y, Z축 0 완전 고정 (단정한 11자 평행 보행)
+            char.parts.leftLeg.rotation.y = 0;
+            char.parts.rightLeg.rotation.y = 0;
+            char.parts.leftLeg.rotation.z = 0;
+            char.parts.rightLeg.rotation.z = 0;
+
+            // 걷거나 달릴 때 어깨와 상체가 당당하게 스웨이 (야쿠자 특유의 위압적인 보행)
+            char.parts.torso.rotation.y = Math.sin(t * freq) * (speed > 7 ? 0.24 : 0.15);
+
+            if (moveZ < 0) { // 전진 (W)
+                char.parts.torso.rotation.x = speed > 7 ? 0.42 : 0.18; // 고속 질주 시 공격적으로 수그림
+                char.parts.torso.rotation.z = moveX * 0.12;
+                char.parts.leftLeg.rotation.x = -swing;
+                char.parts.rightLeg.rotation.x = swing;
+                // 파이팅 가드 자세를 유지하며 역동적인 팔 펌핑
+                char.parts.leftArm.rotation.x = swing * 0.85;
+                char.parts.leftArm.rotation.z = -0.15;
+                char.parts.rightArm.rotation.x = -swing * 0.85;
+                char.parts.rightArm.rotation.z = 0.15;
+            } else if (moveZ > 0) { // 후진 백스텝 (S)
+                char.parts.torso.rotation.x = -0.15;
+                char.parts.torso.rotation.z = -moveX * 0.1;
+                char.parts.leftLeg.rotation.x = swing * 0.75;
+                char.parts.rightLeg.rotation.x = -swing * 0.75;
+                char.parts.leftArm.rotation.x = -swing * 0.55;
+                char.parts.leftArm.rotation.z = -0.15;
+                char.parts.rightArm.rotation.x = swing * 0.55;
+                char.parts.rightArm.rotation.z = 0.15;
+            } else { // 순수 좌/우 사이드스텝 (A/D 게걸음)
+                char.parts.torso.rotation.x = 0.08;
+                char.parts.torso.rotation.z = -moveX * 0.18; // 상체 틸트
+                char.parts.leftLeg.rotation.x = -swing * 0.55;
+                char.parts.rightLeg.rotation.x = swing * 0.55;
+                char.parts.leftArm.rotation.x = -0.6;
+                char.parts.leftArm.rotation.z = -0.2;
+                char.parts.rightArm.rotation.x = -0.6;
+                char.parts.rightArm.rotation.z = 0.2;
+            }
+            char.parts.head.rotation.y = -char.parts.torso.rotation.y * 0.65; // 타겟 정면 고정 시선
+            char.parts.head.rotation.x = -0.06 + Math.sin(t * freq * 2) * 0.03;
+        }
+
+        // 적 NPC 전용 달리기 모션
+        function applyMinecraftRun(char, t, speed) {
+            const freq = 11;
+            const swing = Math.sin(t * freq) * 0.85;
+            char.parts.hips.position.y = 1.35 - Math.abs(Math.sin(t * freq)) * 0.05;
+            char.parts.leftLeg.rotation.set(-swing, 0, 0);
+            char.parts.rightLeg.rotation.set(swing, 0, 0);
+            char.parts.leftArm.rotation.set(swing * 0.85, 0, -0.15);
+            char.parts.rightArm.rotation.set(-swing * 0.85, 0, 0.15);
+            char.parts.torso.rotation.set(0.18, Math.sin(t * freq) * 0.14, 0);
+            char.parts.head.rotation.set(-0.05, 0, 0);
+        }
+
+        // 전방향 대시(스웨이) 역동적 모션 계산
+        function applyDashMotion(char, type, p) {
+            const easeP = Math.sin(p * Math.PI); // 0 -> 1 -> 0
+
+            if (type === 'forward') {
+                // 공격적인 전진 위빙 대시: 상체를 깊게 수그리고 가드를 단단히 굳히며 돌진
+                char.parts.hips.position.y = 1.35 - easeP * 0.22;
+                char.parts.torso.rotation.x = 0.45 * easeP;
+                char.parts.torso.rotation.y = Math.sin(p * Math.PI * 2) * 0.15;
+                char.parts.leftArm.rotation.x = -1.1 - easeP * 0.3;
+                char.parts.leftArm.rotation.z = -0.3;
+                char.parts.rightArm.rotation.x = -1.1 - easeP * 0.3;
+                char.parts.rightArm.rotation.z = 0.3;
+                char.parts.leftLeg.rotation.x = -easeP * 0.65;
+                char.parts.rightLeg.rotation.x = easeP * 0.55;
+            } else if (type === 'back') {
+                // 기민한 후방 홉 백스텝: 가슴을 뒤로 젖히며 지면을 박차고 뒤로 도약
+                char.parts.hips.position.y = 1.35 + easeP * 0.28;
+                char.parts.torso.rotation.x = -0.25 * easeP;
+                char.parts.leftArm.rotation.x = -0.7 - easeP * 0.2;
+                char.parts.rightArm.rotation.x = -0.7 - easeP * 0.2;
+                char.parts.leftLeg.rotation.x = easeP * 0.45;
+                char.parts.rightLeg.rotation.x = easeP * 0.45;
+            } else if (type === 'side_left') {
+                // 좌측 사이드 스웨이 회피: 상체를 왼쪽으로 기울이며 슬립
+                char.parts.hips.position.y = 1.35 - easeP * 0.14;
+                char.parts.torso.rotation.z = 0.38 * easeP;
+                char.parts.torso.rotation.y = -0.25 * easeP;
+                char.parts.leftArm.rotation.x = -0.8;
+                char.parts.rightArm.rotation.x = -0.8;
+                char.parts.leftLeg.rotation.z = -0.35 * easeP;
+                char.parts.rightLeg.rotation.z = -0.35 * easeP;
+            } else if (type === 'side_right') {
+                // 우측 사이드 스웨이 회피: 상체를 오른쪽으로 기울이며 슬립
+                char.parts.hips.position.y = 1.35 - easeP * 0.14;
+                char.parts.torso.rotation.z = -0.38 * easeP;
+                char.parts.torso.rotation.y = 0.25 * easeP;
+                char.parts.leftArm.rotation.x = -0.8;
+                char.parts.rightArm.rotation.x = -0.8;
+                char.parts.leftLeg.rotation.z = 0.35 * easeP;
+                char.parts.rightLeg.rotation.z = 0.35 * easeP;
+            }
+        }
+
+        // ==========================================
+        // 7-B. 방향별 대시(Sway) & 쿨타임 시스템
+        // (W: 앞대시 1.0s, A/D: 옆대시 0.65s, S: 뒤대시 1.3s)
+        // ==========================================
+        const dashCooldowns = {
+            forward: { total: 1.0, current: 0 },
+            side:    { total: 0.65, current: 0 },
+            back:    { total: 1.3, current: 0 }
+        };
+        let activeDash = null;
+
+        function tryExecuteDash(forcedType) {
+            if (activeDash) return;
+
+            // 방향 판별: forcedType 우선(더블탭), 그 외 방향키 조합 또는 기본 전진
+            let dashType = 'forward';
+            let cdKey = 'forward';
+
+            if (forcedType) {
+                dashType = forcedType;
+                if (forcedType === 'back') cdKey = 'back';
+                else if (forcedType === 'side_left' || forcedType === 'side_right') cdKey = 'side';
+                else cdKey = 'forward';
+            } else if (keys['KeyS'] && !keys['KeyW']) {
+                dashType = 'back';
+                cdKey = 'back';
+            } else if (keys['KeyA'] && !keys['KeyD'] && !keys['KeyW'] && !keys['KeyS']) {
+                dashType = 'side_left';
+                cdKey = 'side';
+            } else if (keys['KeyD'] && !keys['KeyA'] && !keys['KeyW'] && !keys['KeyS']) {
+                dashType = 'side_right';
+                cdKey = 'side';
+            } else if ((keys['KeyA'] || keys['KeyD']) && !keys['KeyW'] && !keys['KeyS']) {
+                dashType = keys['KeyA'] ? 'side_left' : 'side_right';
+                cdKey = 'side';
+            } else {
+                dashType = 'forward';
+                cdKey = 'forward';
+            }
+
+            if (dashCooldowns[cdKey].current > 0) {
+                triggerCdShake(cdKey);
+                return;
+            }
+
+            // 쿨타임 시작
+            dashCooldowns[cdKey].current = dashCooldowns[cdKey].total;
+
+            // 공격 중 대시 캔슬(스웨이 캔슬): 일반 콤보 동작 즉시 취소 후 회피
+            if (isAttacking && activeAttackSeq && activeAttackSeq.type !== 'heat_action') {
+                isAttacking = false;
+                activeAttackSeq = null;
+                player.parts.rightLeg.rotation.set(0, 0, 0);
+                player.parts.leftLeg.rotation.set(0, 0, 0);
+                player.parts.hips.position.y = 1.35;
+            }
+
+            // 대시 방향 계산 (카메라 및 쉬프트락 기준)
+            _vForward.set(-Math.sin(camYaw), 0, -Math.cos(camYaw)).normalize();
+            _vRight.set(Math.cos(camYaw), 0, -Math.sin(camYaw)).normalize();
+
+            const dashDir = new THREE.Vector3();
+            let burstSpeed = 19.5;
+            let duration = 0.20;
+            let effectColor = 0x00e5ff;
+
+            if (dashType === 'forward') {
+                dashDir.copy(_vForward);
+                burstSpeed = 20.0;
+                duration = 0.21;
+                effectColor = 0x00e5ff;
+            } else if (dashType === 'back') {
+                dashDir.copy(_vForward).negate();
+                burstSpeed = 18.0;
+                duration = 0.19;
+                effectColor = 0xff2a6d;
+            } else if (dashType === 'side_left') {
+                dashDir.copy(_vRight).negate();
+                burstSpeed = 18.5;
+                duration = 0.18;
+                effectColor = 0xffaa00;
+            } else if (dashType === 'side_right') {
+                dashDir.copy(_vRight);
+                burstSpeed = 18.5;
+                duration = 0.18;
+                effectColor = 0xffaa00;
+            }
+
+            activeDash = {
+                type: dashType,
+                cdKey: cdKey,
+                dir: dashDir,
+                speed: burstSpeed,
+                duration: duration,
+                time: 0
+            };
+
+            playSound('dash');
+            addShake(0.25);
+
+            _vHitPos.copy(player.position);
+            _vHitPos.y += 0.3;
+            emitShockwaveRing(_vHitPos, effectColor);
+            emitVoxelDebris(_vHitPos, 16, effectColor);
+        }
+
+        function updateDashCooldowns(dt) {
+            for (const key of ['forward', 'side', 'back']) {
+                const cd = dashCooldowns[key];
+                const mask = document.getElementById(`dash-mask-${key}`);
+                const text = document.getElementById(`dash-text-${key}`);
+                const slot = document.getElementById(`dash-slot-${key}`);
+                if (!mask || !text || !slot) continue;
+
+                if (cd.current > 0) {
+                    const prev = cd.current;
+                    cd.current = Math.max(0, cd.current - dt);
+
+                    const pct = (cd.current / cd.total) * 100;
+                    mask.style.height = pct.toFixed(1) + '%';
+                    text.innerText = cd.current.toFixed(1) + 's';
+                    text.style.display = 'block';
+                    slot.classList.add('on-cooldown');
+                    slot.classList.remove('is-ready');
+
+                    if (cd.current === 0 && prev > 0) {
+                        triggerCdReady(key);
+                    }
+                } else {
+                    mask.style.height = '0%';
+                    text.innerText = 'READY';
+                    text.style.display = 'none';
+                    slot.classList.remove('on-cooldown');
+                    slot.classList.add('is-ready');
+                }
+            }
+        }
+
+        function triggerCdReady(key) {
+            const slot = document.getElementById(`dash-slot-${key}`);
+            if (slot) {
+                slot.classList.remove('dash-ready-pop');
+                void slot.offsetWidth; // DOM reflow
+                slot.classList.add('dash-ready-pop');
+            }
+            playSound('dash_ready');
+        }
+
+        function triggerCdShake(key) {
+            const slot = document.getElementById(`dash-slot-${key}`);
+            if (slot) {
+                slot.classList.remove('dash-shake');
+                void slot.offsetWidth;
+                slot.classList.add('dash-shake');
+            }
+        }
+
+        // ==========================================
+        // 8. 4단 콤보 & 극의(Heat Action) & 입력 버퍼링 시스템
+        // ==========================================
+        let attackQueued = false;
+        let heatQueued = false;
+
+        function queueOrExecuteAttack() {
+            if (isAttacking) {
+                // 어떤 프레임에서 클릭하든 100% 선입력(Buffer)되어 다음 콤보로 즉각 연계!
+                attackQueued = true;
+                return;
+            }
+            executeAttack();
+        }
+
+        function queueOrExecuteHeat() {
+            if (isAttacking) {
+                heatQueued = true;
+                return;
+            }
+            executeHeatAction();
+        }
+
+        function executeAttack() {
+            if (isAttacking) return;
+
+            // 적이 바닥에 쓰러져 누워 있을 때 (기상 중이 아니며 근접 2.8m 이내일 때만 다운 스탬프 발동)
+            // 거리가 멀거나 적이 이미 기상 중이면 일반 1타 잽으로 쾌속 전진 돌격!
+            if (enemyKnocked && enemyAnimState.state !== 'getup') {
+                const dist = player.position.distanceTo(enemy.position);
+                if (dist <= 2.8) {
+                    executeDownAttack();
+                    return;
+                }
+            }
+
+            isAttacking = true;
+            comboCount++;
+            if (comboCount > 4) comboCount = 1;
+
+            clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => {
+                comboCount = 0;
+                comboBoxEl.style.opacity = '0';
+            }, 1400);
+
+            // 콤보 UI
+            comboNumEl.innerText = comboCount;
+            comboBoxEl.style.opacity = '1';
+            comboBoxEl.style.transform = 'translateY(-50%) scale(1.15)';
+            setTimeout(() => { comboBoxEl.style.transform = 'translateY(-50%) scale(1)'; }, 80);
+
+            // HEAT 게이지 증가
+            playerHeat = Math.min(100, playerHeat + 14);
+            playerHeatEl.style.width = playerHeat + '%';
+            if (playerHeat >= 100) {
+                heatActionPromptEl.style.display = 'block';
+                heatVignetteEl.style.opacity = '1';
+                playerHeatEl.parentElement.classList.add('heat-ready-glow');
+            }
+
+            // 쾌속하고 박진감 넘치는 콤보 모션 시간 세팅 (잽 ➔ 스트레이트 ➔ 어퍼컷 ➔ 헤비 킥)
+            const comboDurations = [0.22, 0.22, 0.26, 0.38];
+            activeAttackSeq = {
+                type: 'combo',
+                step: comboCount,
+                time: 0,
+                duration: comboDurations[comboCount - 1] || 0.22,
+                hitDone: false,
+                slashDone: false
+            };
+        }
+
+        // 다운 공격 (지면 스탬프 킥)
+        function executeDownAttack() {
+            isAttacking = true;
+            comboCount++;
+            if (comboCount > 4) comboCount = 1;
+
+            clearTimeout(comboTimer);
+            comboTimer = setTimeout(() => {
+                comboCount = 0;
+                comboBoxEl.style.opacity = '0';
+            }, 1400);
+
+            comboNumEl.innerText = comboCount;
+            comboBoxEl.style.opacity = '1';
+            comboBoxEl.style.transform = 'translateY(-50%) scale(1.15)';
+            setTimeout(() => { comboBoxEl.style.transform = 'translateY(-50%) scale(1)'; }, 80);
+
+            playerHeat = Math.min(100, playerHeat + 14);
+            playerHeatEl.style.width = playerHeat + '%';
+            if (playerHeat >= 100) {
+                heatActionPromptEl.style.display = 'block';
+                heatVignetteEl.style.opacity = '1';
+                playerHeatEl.parentElement.classList.add('heat-ready-glow');
+            }
+
+            activeAttackSeq = {
+                type: 'down_attack',
+                time: 0,
+                duration: 0.35,
+                hitDone: false,
+                slashDone: false
+            };
+        }
+
+        // 극(極) 액션 발동
+        function executeHeatAction() {
+            if (isAttacking || playerHeat < 100) return;
+
+            // 거리 체크
+            const dist = player.position.distanceTo(enemy.position);
+            if (dist > 4.0) return; // 범위 내에서 발동
+
+            isAttacking = true;
+            playerHeat = 0;
+            playerHeatEl.style.width = '0%';
+            heatActionPromptEl.style.display = 'none';
+            heatVignetteEl.style.opacity = '0';
+            playerHeatEl.parentElement.classList.remove('heat-ready-glow');
+
+            activeAttackSeq = {
+                type: 'heat_action',
+                time: 0,
+                duration: 1.35,
+                hitDone: false,
+                slashDone: false
+            };
+        }
+
+        // 적 피격 처리 (재사용 벡터로 GC 랙 완전 제거)
+        function onEnemyDamaged(damage, knockbackLevel) {
+            enemyHp = Math.max(0, enemyHp - damage);
+            bossHpBarEl.style.width = enemyHp + '%';
+            bossHpTextEl.innerText = enemyHp + ' / 100';
+
+            // 마크 데미지 플래시 (빨간색 점멸)
+            enemy.flashRed();
+
+            _vHitPos.copy(enemy.position);
+            _vHitPos.y += (enemyKnocked ? 0.6 : 2.2);
+
+            if (knockbackLevel === 5 || enemyKnocked) {
+                // 다운된 적에게 스탬프 타격 시: 강력한 바닥 피격 충격 후 즉시 신속 롤링 기상!
+                playSound('heavy_hit');
+                triggerScreenFlash();
+                addShake(0.75);
+                emitMinecraftCriticalHit(_vHitPos, 45, true);
+                emitShockwaveRing(_vHitPos, 0xffaa00);
+                emitVoxelDebris(_vHitPos, 35, 0xcaa135);
+
+                enemyKnocked = true;
+                enemyAnimState = {
+                    state: 'getup',
+                    time: 0,
+                    duration: 0.40,
+                    fromRotX: enemy.rotation.x || -Math.PI / 2
+                };
+            } else if (knockbackLevel === 1) { // 1~2타 가벼운 히트
+                playSound('hit');
+                applyHitStop(0.04);
+                addShake(0.2);
+                emitMinecraftCriticalHit(_vHitPos, 22);
+                emitShockwaveRing(_vHitPos, 0x00e5ff); // 청록 충격파 링
+                emitVoxelDebris(_vHitPos, 16, 0xcaa135); // 뱀가죽 블록 파편
+                enemy.position.z -= 0.4; // 넉백
+                enemyAnimState = { state: 'hit', time: 0, duration: 0.22, rotX: -0.35 };
+            } else if (knockbackLevel === 2) { // 3타 어퍼컷
+                playSound('hit');
+                applyHitStop(0.08);
+                addShake(0.4);
+                emitMinecraftCriticalHit(_vHitPos, 35);
+                emitShockwaveRing(_vHitPos, 0xffaa00); // 골드 충격파 링
+                emitVoxelDebris(_vHitPos, 26, 0xffdd44); // 황금 블록 파편
+                enemy.position.z -= 0.7;
+                enemyAnimState = { state: 'hit', time: 0, duration: 0.30, rotX: -0.65, liftY: 0.6 };
+            } else if (knockbackLevel === 3) { // 4타 헤비 킥 피니시
+                playSound('heavy_hit');
+                triggerScreenFlash();
+                applyHitStop(0.16);
+                addShake(0.85);
+                emitMinecraftCriticalHit(_vHitPos, 65, true);
+                emitShockwaveRing(_vHitPos, 0xff2244); // 붉은 거대 충격파 링
+                emitVoxelDebris(_vHitPos, 45, 0xff1133); // 붉은 블록 파편 폭발!
+
+                enemyKnocked = true;
+                const targetKnockZ = Math.max(-38.0, Math.min(28.0, enemy.position.z - 5.5));
+                enemyAnimState = {
+                    state: 'knockdown',
+                    time: 0,
+                    duration: 0.85, // 0.85초 신속하고 경쾌한 넉다운 후 기상
+                    targetZ: targetKnockZ
+                };
+            } else if (knockbackLevel === 4) { // 극의 슬램
+                playSound('slam');
+                triggerScreenFlash();
+                applyHitStop(0.20);
+                addShake(1.1);
+                emitMinecraftCriticalHit(_vHitPos, 80, true);
+                emitShockwaveRing(_vHitPos, 0x00ffff);
+                emitVoxelDebris(_vHitPos, 50, 0x00e5ff);
+
+                enemyKnocked = true;
+                enemyAnimState = {
+                    state: 'slammed',
+                    time: 0,
+                    duration: 1.05
+                };
+            }
+
+            // 적 HP 0 리셋 (무한 대련)
+            if (enemyHp <= 0) {
+                setTimeout(() => {
+                    enemyHp = 100;
+                    bossHpBarEl.style.width = '100%';
+                    bossHpTextEl.innerText = '100 / 100';
+                }, 1600);
+            }
+        }
+
+        // 적 애니메이션 상태
+        let enemyAnimState = { state: 'idle', time: 0, duration: 0 };
+
+        // ==========================================
+        // 9. 메인 게임 루프 (Frame Update)
+        // ==========================================
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            let dt = clock.getDelta();
+            if (dt > 0.1) dt = 0.1; // 프레임 드랍 튐 방지
+
+            // 타격감(충격)은 프레임 정지 없이 화면 흔들림 및 파티클로 부드럽게 실시간 렌더링
+
+            playerAnimTime += dt;
+            enemyAnimTime += dt;
+
+            // 데미지 플래시 타이머 프레임 업데이트
+            player.updateFlash(dt);
+            enemy.updateFlash(dt);
+
+            // 쿨타임 실시간 감소 및 UI 갱신
+            updateDashCooldowns(dt);
+
+            // 1. 플레이어 이동 및 대시 & 쉬프트락 고정 회전 (무할당 벡터 연산)
+            let moveX = 0;
+            let moveZ = 0;
+            if (keys['KeyW']) moveZ -= 1;
+            if (keys['KeyS']) moveZ += 1;
+            if (keys['KeyA']) moveX -= 1;
+            if (keys['KeyD']) moveX += 1;
+
+            const isMoving = (moveX !== 0 || moveZ !== 0);
+            const isSprinting = keys['ShiftLeft'] || keys['ShiftRight'];
+            const moveSpeed = isSprinting ? 15.0 : 5.0; // 스프린트 15.0m/s (기존 8.5 대비 75% 대폭 가속!)
+
+            // ★ 쉬프트락 고정: 캐릭터의 몸통/시선이 항상 카메라 조준 방향(camYaw + Math.PI)과 100% 동기화
+            player.rotation.y = camYaw + Math.PI;
+
+            if (activeDash) {
+                activeDash.time += dt;
+                const dp = Math.min(1.0, activeDash.time / activeDash.duration);
+
+                // 폭발적인 초기 대시 속도 후 부드러운 감속 곡선
+                const currentSpeed = activeDash.speed * (1.0 - dp * 0.45);
+                player.position.addScaledVector(activeDash.dir, currentSpeed * dt);
+
+                // 카무로초 골목 경계선 (벽 관통 및 맵 이탈 방지)
+                player.position.x = Math.max(-9.8, Math.min(9.8, player.position.x));
+                player.position.z = Math.max(-38.0, Math.min(28.0, player.position.z));
+
+                applyDashMotion(player, activeDash.type, dp);
+
+                if (dp >= 1.0) {
+                    activeDash = null;
+                    player.parts.hips.position.y = 1.35;
+                    player.parts.leftLeg.rotation.set(0, 0, 0);
+                    player.parts.rightLeg.rotation.set(0, 0, 0);
+                    player.parts.torso.rotation.set(0.08, 0, 0);
+                }
+            } else if (isMoving && !isAttacking) {
+                _vForward.set(-Math.sin(camYaw), 0, -Math.cos(camYaw));
+                _vRight.set(Math.cos(camYaw), 0, -Math.sin(camYaw));
+                _vMoveDir.set(0, 0, 0)
+                    .addScaledVector(_vForward, -moveZ)
+                    .addScaledVector(_vRight, moveX)
+                    .normalize();
+
+                player.position.addScaledVector(_vMoveDir, moveSpeed * dt);
+
+                // 카무로초 골목 경계선 (벽 관통 및 맵 이탈 방지)
+                player.position.x = Math.max(-9.8, Math.min(9.8, player.position.x));
+                player.position.z = Math.max(-38.0, Math.min(28.0, player.position.z));
+
+                // 쉬프트락 전용 스트레이프 애니메이션 (전진, 백스텝, 좌우 게걸음)
+                applyShiftLockStrafe(player, playerAnimTime, moveX, moveZ, moveSpeed);
+            } else if (!isAttacking) {
+                applyMinecraftIdle(player, playerAnimTime, true);
+            }
+
+            // 2. 공격 시퀀스 업데이트
+            if (activeAttackSeq) {
+                activeAttackSeq.time += dt;
+                const p = activeAttackSeq.time / activeAttackSeq.duration;
+
+                // 공격 중에도 조준점(크로스헤어)을 정면으로 주시
+                player.rotation.y = camYaw + Math.PI;
+
+                // ★ 사용자 요청: 공격 시 적 쪽으로 전진/자석 이동 완전 제거 (100% 제자리 공격)
+
+                if (activeAttackSeq.type === 'combo') {
+                    const step = activeAttackSeq.step;
+
+                    if (step === 1) { // 1타: 빠른 레프트 잽
+                        if (p < 0.35) {
+                            if (!activeAttackSeq.slashDone && p > 0.08) {
+                                activeAttackSeq.slashDone = true;
+                                _vSlashPos.set(
+                                    player.position.x - Math.sin(camYaw) * 1.1,
+                                    player.position.y + 1.8,
+                                    player.position.z - Math.cos(camYaw) * 1.1
+                                );
+                                emitAttackSlash(_vSlashPos, camYaw + 0.3, 0.15, 0x00e5ff, 0.95);
+                            }
+                            const inP = p / 0.35;
+                            player.parts.torso.rotation.y = -0.5 * inP;
+                            player.parts.leftArm.rotation.x = -Math.PI * 0.48 * inP;
+                            player.parts.leftArm.rotation.z = -0.1;
+                            player.parts.rightArm.rotation.x = -0.5;
+                        } else {
+                            if (!activeAttackSeq.hitDone) {
+                                activeAttackSeq.hitDone = true;
+                                playSound('whoosh');
+                                const dist = player.position.distanceTo(enemy.position);
+                                if (dist <= 3.1) {
+                                    onEnemyDamaged(10, 1);
+                                }
+                            }
+                            const retP = (p - 0.35) / 0.65;
+                            player.parts.leftArm.rotation.x = THREE.MathUtils.lerp(-Math.PI * 0.48, -0.7, retP);
+                            player.parts.torso.rotation.y = THREE.MathUtils.lerp(-0.5, 0, retP);
+                        }
+                    } else if (step === 2) { // 2타: 전진 라이트 스트레이트
+                        if (p < 0.35) {
+                            if (!activeAttackSeq.slashDone && p > 0.08) {
+                                activeAttackSeq.slashDone = true;
+                                _vSlashPos.set(
+                                    player.position.x - Math.sin(camYaw) * 1.3,
+                                    player.position.y + 1.8,
+                                    player.position.z - Math.cos(camYaw) * 1.3
+                                );
+                                emitAttackSlash(_vSlashPos, camYaw - 0.25, -0.1, 0xff8800, 1.15);
+                            }
+                            const inP = p / 0.35;
+                            player.parts.torso.rotation.y = 0.6 * inP;
+                            player.parts.rightArm.rotation.x = -Math.PI * 0.52 * inP;
+                            player.parts.rightArm.rotation.z = 0.1;
+                            player.parts.leftArm.rotation.x = -0.4;
+                        } else {
+                            if (!activeAttackSeq.hitDone) {
+                                activeAttackSeq.hitDone = true;
+                                playSound('whoosh');
+                                const dist = player.position.distanceTo(enemy.position);
+                                if (dist <= 3.2) {
+                                    onEnemyDamaged(15, 1);
+                                }
+                            }
+                            const retP = (p - 0.35) / 0.65;
+                            player.parts.rightArm.rotation.x = THREE.MathUtils.lerp(-Math.PI * 0.52, -0.8, retP);
+                            player.parts.torso.rotation.y = THREE.MathUtils.lerp(0.6, 0, retP);
+                        }
+                    } else if (step === 3) { // 3타: 도약 레프트 어퍼컷
+                        if (p < 0.38) {
+                            if (!activeAttackSeq.slashDone && p > 0.16) {
+                                activeAttackSeq.slashDone = true;
+                                _vSlashPos.set(
+                                    player.position.x - Math.sin(camYaw) * 1.0,
+                                    player.position.y + 1.9,
+                                    player.position.z - Math.cos(camYaw) * 1.0
+                                );
+                                emitAttackSlash(_vSlashPos, camYaw, -Math.PI * 0.35, 0xffd700, 1.25);
+                            }
+                            const inP = p / 0.38;
+                            player.parts.hips.position.y = 1.35 - 0.2 * inP;
+                            player.parts.torso.rotation.x = 0.4 * inP;
+                            player.parts.leftArm.rotation.x = 0.3 * inP;
+                        } else if (p < 0.6) {
+                            if (!activeAttackSeq.hitDone) {
+                                activeAttackSeq.hitDone = true;
+                                playSound('whoosh');
+                                const dist = player.position.distanceTo(enemy.position);
+                                if (dist <= 3.2) {
+                                    onEnemyDamaged(20, 2);
+                                }
+                            }
+                            const upP = (p - 0.38) / 0.22;
+                            player.parts.hips.position.y = 1.35 + 0.3 * upP;
+                            player.parts.torso.rotation.x = -0.3;
+                            player.parts.leftArm.rotation.x = -Math.PI * 0.85 * upP;
+                        } else {
+                            const retP = (p - 0.6) / 0.4;
+                            player.parts.hips.position.y = THREE.MathUtils.lerp(1.65, 1.35, retP);
+                            player.parts.leftArm.rotation.x = THREE.MathUtils.lerp(-Math.PI * 0.85, -0.7, retP);
+                        }
+                    } else if (step === 4) { // 4타 피니시: 강력한 스탠딩 헤비 킥!
+                        if (p < 0.35) {
+                            if (!activeAttackSeq.slashDone && p > 0.15) {
+                                activeAttackSeq.slashDone = true;
+                                _vSlashPos.set(
+                                    player.position.x - Math.sin(camYaw) * 1.4,
+                                    player.position.y + 1.5,
+                                    player.position.z - Math.cos(camYaw) * 1.4
+                                );
+                                emitAttackSlash(_vSlashPos, camYaw - 0.4, 0.2, 0xff1744, 1.6);
+                            }
+                            const inP = p / 0.35;
+                            player.parts.hips.position.y = 1.35;
+                            player.parts.torso.rotation.y = -0.55 * inP;
+                            player.parts.torso.rotation.x = 0.1;
+                            player.parts.rightLeg.rotation.x = -Math.PI * 0.4 * inP;
+                            player.parts.rightLeg.rotation.z = -0.3 * inP;
+                            player.parts.leftLeg.rotation.x = 0.15 * inP;
+                            player.parts.leftArm.rotation.x = -0.9;
+                            player.parts.rightArm.rotation.x = 0.2;
+                        } else if (p < 0.65) {
+                            if (!activeAttackSeq.hitDone) {
+                                activeAttackSeq.hitDone = true;
+                                playSound('heavy_hit');
+                                const dist = player.position.distanceTo(enemy.position);
+                                if (dist <= 3.6) {
+                                    onEnemyDamaged(35, 3);
+                                }
+                            }
+                            const strikeP = (p - 0.35) / 0.3;
+                            player.parts.torso.rotation.y = THREE.MathUtils.lerp(-0.55, 0.75, strikeP);
+                            player.parts.torso.rotation.x = -0.28;
+                            player.parts.rightLeg.rotation.x = -Math.PI * 0.54;
+                            player.parts.rightLeg.rotation.z = -0.65;
+                            player.parts.rightArm.rotation.x = 0.6;
+                            player.parts.leftArm.rotation.x = -1.1;
+                        } else {
+                            const retP = (p - 0.65) / 0.35;
+                            player.parts.rightLeg.rotation.x = THREE.MathUtils.lerp(-Math.PI * 0.54, 0, retP);
+                            player.parts.rightLeg.rotation.z = THREE.MathUtils.lerp(-0.65, 0, retP);
+                            player.parts.leftLeg.rotation.x = THREE.MathUtils.lerp(0.15, 0, retP);
+                            player.parts.torso.rotation.y = THREE.MathUtils.lerp(0.75, 0, retP);
+                            player.parts.torso.rotation.x = THREE.MathUtils.lerp(-0.28, 0.08, retP);
+                            player.parts.rightArm.rotation.x = THREE.MathUtils.lerp(0.6, -0.8, retP);
+                            player.parts.leftArm.rotation.x = THREE.MathUtils.lerp(-1.1, -0.7, retP);
+                        }
+                    }
+                } else if (activeAttackSeq.type === 'down_attack') { // 다운 공격: 쓰러진 적 스탬프 로우 킥
+                    if (p < 0.4) {
+                        const inP = p / 0.4;
+                        player.parts.hips.position.y = 1.35 + 0.2 * inP;
+                        player.parts.rightLeg.rotation.x = -Math.PI * 0.45 * inP;
+                        player.parts.torso.rotation.x = 0.2 * inP;
+                        player.parts.leftArm.rotation.x = -0.5 * inP;
+                        player.parts.rightArm.rotation.x = 0.3 * inP;
+                    } else if (p < 0.7) {
+                        if (!activeAttackSeq.hitDone) {
+                            activeAttackSeq.hitDone = true;
+                            playSound('heavy_hit');
+                            const dist = player.position.distanceTo(enemy.position);
+                            if (dist <= 3.2) {
+                                onEnemyDamaged(28, 5); // 넉백 레벨 5: 다운 타격 피격 및 신속 기상 트리거
+                                addShake(0.7);
+                            }
+                        }
+                        player.parts.hips.position.y = 1.15;
+                        player.parts.rightLeg.rotation.x = -Math.PI * 0.15;
+                        player.parts.torso.rotation.x = 0.45;
+                        player.parts.leftArm.rotation.x = -0.6;
+                        player.parts.rightArm.rotation.x = 0.4;
+                    } else {
+                        const retP = (p - 0.7) / 0.3;
+                        player.parts.hips.position.y = THREE.MathUtils.lerp(1.15, 1.35, retP);
+                        player.parts.rightLeg.rotation.x = THREE.MathUtils.lerp(-Math.PI * 0.15, 0, retP);
+                        player.parts.torso.rotation.x = THREE.MathUtils.lerp(0.45, 0.08, retP);
+                        player.parts.leftArm.rotation.x = THREE.MathUtils.lerp(-0.6, -0.7, retP);
+                        player.parts.rightArm.rotation.x = THREE.MathUtils.lerp(0.4, -0.8, retP);
+                    }
+                } else if (activeAttackSeq.type === 'heat_action') { // 극의: 멱살 잡고 지면 슬램!
+                    if (p < 0.3) { // 접근 & 잡기
+                        _vDesiredPos.set(enemy.position.x, enemy.position.y, enemy.position.z + 1.1);
+                        player.position.lerp(_vDesiredPos, 0.2);
+                        player.parts.leftArm.rotation.x = -Math.PI * 0.45;
+                        player.parts.rightArm.rotation.x = -Math.PI * 0.45;
+                        enemy.parts.hips.position.y = 1.35 + 0.3 * (p / 0.3);
+                    } else if (p < 0.65) { // 번쩍 들어올리기
+                        const liftP = (p - 0.3) / 0.35;
+                        player.parts.leftArm.rotation.x = -Math.PI * 0.8;
+                        player.parts.rightArm.rotation.x = -Math.PI * 0.8;
+                        enemy.position.set(player.position.x, player.position.y + 1.8 * liftP, player.position.z - 0.8);
+                        enemy.rotation.x = Math.PI * 0.8 * liftP;
+                    } else if (p < 0.8) { // 바닥으로 쾅 내리꽂기!
+                        player.parts.leftArm.rotation.x = -0.2;
+                        player.parts.rightArm.rotation.x = -0.2;
+                        player.parts.torso.rotation.x = 0.5;
+                        enemy.position.set(player.position.x, 0.4, player.position.z - 1.2);
+                        enemy.rotation.x = Math.PI / 2;
+
+                        if (!activeAttackSeq.hitDone) {
+                            activeAttackSeq.hitDone = true;
+                            onEnemyDamaged(50, 4);
+                        }
+                    } else { // 마무리 포즈
+                        const retP = (p - 0.8) / 0.2;
+                        player.parts.torso.rotation.x = THREE.MathUtils.lerp(0.5, 0.08, retP);
+                    }
+                }
+
+                // 콤보 캔슬 윈도우: 1~3타 공격이 적중(hitDone)한 직후 다음 공격이 선입력되어 있으면 후딜 없이 즉각 다음 콤보로 캔슬 연계!
+                const canComboCancel = (activeAttackSeq.type === 'combo' && activeAttackSeq.step < 4 && activeAttackSeq.hitDone && p >= 0.42 && attackQueued);
+
+                if (p >= 1 || canComboCancel) {
+                    activeAttackSeq = null;
+                    isAttacking = false;
+                    // 팔다리 및 골반 자세 가지런히 복귀
+                    player.parts.rightLeg.rotation.set(0, 0, 0);
+                    player.parts.leftLeg.rotation.set(0, 0, 0);
+                    player.parts.hips.position.y = 1.35;
+                    // 버퍼링된 입력 즉시 체이닝
+                    if (attackQueued) {
+                        attackQueued = false;
+                        executeAttack();
+                    } else if (heatQueued) {
+                        heatQueued = false;
+                        executeHeatAction();
+                    }
+                }
+            }
+
+            // 3. 적 애니메이션 업데이트
+            if (enemyKnocked) {
+                enemyAnimState.time += dt;
+                const ep = enemyAnimState.time / (enemyAnimState.duration || 0.85);
+
+                // 안전 보장(Fail-safe): 만약 1.2초 이상 누워있거나 비정상 상태면 100% 무조건 기상 처리!
+                if (enemyAnimState.time >= 1.2 || (enemyAnimState.state !== 'knockdown' && enemyAnimState.state !== 'slammed' && enemyAnimState.state !== 'getup')) {
+                    enemyKnocked = false;
+                    enemyAnimState = { state: 'idle', time: 0, duration: 0 };
+                    enemy.position.y = 0;
+                    enemy.rotation.x = 0;
+                    enemy.rotation.z = 0;
+                    enemy.parts.torso.rotation.set(0, 0, 0);
+                    enemy.parts.hips.position.y = 1.35;
+                } else if (enemyAnimState.state === 'knockdown') {
+                    if (ep < 0.35) { // 날아가는 중
+                        const flyP = ep / 0.35;
+                        enemy.position.z = THREE.MathUtils.lerp(enemy.position.z, enemyAnimState.targetZ, 0.15);
+                        enemy.position.y = Math.sin(flyP * Math.PI) * 1.5;
+                        enemy.rotation.x = -Math.PI / 2 * flyP;
+                    } else if (ep < 0.65) { // 바닥에 쓰러져 있음
+                        enemy.position.y = 0.3;
+                        enemy.rotation.x = -Math.PI / 2;
+                    } else { // 신속 기상 모션
+                        const getUpP = Math.min(1.0, (ep - 0.65) / 0.35);
+                        enemy.position.y = THREE.MathUtils.lerp(0.3, 0, getUpP);
+                        enemy.rotation.x = THREE.MathUtils.lerp(-Math.PI / 2, 0, getUpP);
+                        if (ep >= 1.0) {
+                            enemyKnocked = false;
+                            enemyAnimState = { state: 'idle', time: 0, duration: 0 };
+                            enemy.position.y = 0;
+                            enemy.rotation.x = 0;
+                            enemy.rotation.z = 0;
+                            enemy.parts.torso.rotation.set(0, 0, 0);
+                            enemy.parts.hips.position.y = 1.35;
+                        }
+                    }
+                } else if (enemyAnimState.state === 'slammed') {
+                    if (ep < 0.60) {
+                        enemy.position.y = 0.3;
+                        enemy.rotation.x = Math.PI / 2;
+                    } else {
+                        const getUpP = Math.min(1.0, (ep - 0.60) / 0.40);
+                        enemy.position.y = THREE.MathUtils.lerp(0.3, 0, getUpP);
+                        enemy.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0, getUpP);
+                        if (ep >= 1.0) {
+                            enemyKnocked = false;
+                            enemyAnimState = { state: 'idle', time: 0, duration: 0 };
+                            enemy.position.y = 0;
+                            enemy.rotation.x = 0;
+                            enemy.rotation.z = 0;
+                            enemy.parts.torso.rotation.set(0, 0, 0);
+                            enemy.parts.hips.position.y = 1.35;
+                        }
+                    }
+                } else if (enemyAnimState.state === 'getup') {
+                    const gp = Math.min(1.0, enemyAnimState.time / (enemyAnimState.duration || 0.40));
+                    enemy.position.y = THREE.MathUtils.lerp(0.3, 0, gp);
+                    enemy.rotation.x = THREE.MathUtils.lerp(enemyAnimState.fromRotX || -Math.PI / 2, 0, gp);
+                    if (gp >= 1.0) {
+                        enemyKnocked = false;
+                        enemyAnimState = { state: 'idle', time: 0, duration: 0 };
+                        enemy.position.y = 0;
+                        enemy.rotation.x = 0;
+                        enemy.rotation.z = 0;
+                        enemy.parts.torso.rotation.set(0, 0, 0);
+                        enemy.parts.hips.position.y = 1.35;
+                    }
+                }
+            } else if (enemyAnimState.state === 'hit') {
+                enemyAnimState.time += dt;
+                const hp = enemyAnimState.time / (enemyAnimState.duration || 0.22);
+                enemy.parts.torso.rotation.x = THREE.MathUtils.lerp(enemyAnimState.rotX || -0.3, 0, Math.min(1.0, hp));
+                if (enemyAnimState.liftY) {
+                    enemy.position.y = Math.sin(Math.min(1.0, hp) * Math.PI) * enemyAnimState.liftY;
+                }
+                if (hp >= 1.0) {
+                    enemyAnimState = { state: 'idle', time: 0, duration: 0 };
+                    enemy.position.y = 0;
+                    enemy.rotation.x = 0;
+                    enemy.parts.torso.rotation.set(0, 0, 0);
+                }
+            } else {
+                // 적 평상시 아이들 & 거리 좁히기 (무할당 벡터)
+                enemy.position.y = 0;
+                enemy.rotation.x = 0;
+                enemy.rotation.z = 0;
+                const distToPlayer = enemy.position.distanceTo(player.position);
+                if (distToPlayer > 2.8) {
+                    _vToPlayer.copy(player.position).sub(enemy.position).normalize();
+                    enemy.position.addScaledVector(_vToPlayer, 1.8 * dt);
+                    enemy.rotation.y = Math.atan2(_vToPlayer.x, _vToPlayer.z);
+                    applyMinecraftRun(enemy, enemyAnimTime, 1.8);
+                } else {
+                    const toPlayerAngle = Math.atan2(player.position.x - enemy.position.x, player.position.z - enemy.position.z);
+                    enemy.rotation.y = toPlayerAngle;
+                    applyMinecraftIdle(enemy, enemyAnimTime, false);
+                }
+            }
+
+            // 적 골목 경계선 제한
+            enemy.position.x = Math.max(-9.8, Math.min(9.8, enemy.position.x));
+            enemy.position.z = Math.max(-38.0, Math.min(28.0, enemy.position.z));
+
+            // 4. 비 애니메이션 (버퍼 재전송 없는 초고속 GPU 메시 트랜스폼 최적화)
+            rainSystem.position.x = player.position.x;
+            rainSystem.position.z = player.position.z;
+            rainSystem.position.y -= 25.0 * dt;
+            if (rainSystem.position.y < -25) {
+                rainSystem.position.y = 0;
+            }
+
+            // 5. 마크 크리티컬 별 파티클 업데이트 (활성 파티클이 있을 때만 GPU 버퍼 업로드)
+            let anyStarActive = false;
+            const starArray = starGeo.attributes.position.array;
+            for (let i = 0; i < starParticleCount; i++) {
+                if (starArray[i * 3 + 1] > -50) {
+                    anyStarActive = true;
+                    starArray[i * 3] += starVel[i].x * dt;
+                    starArray[i * 3 + 1] += starVel[i].y * dt;
+                    starArray[i * 3 + 2] += starVel[i].z * dt;
+                    starVel[i].y -= 9.8 * dt; // 중력
+                    if (starArray[i * 3 + 1] <= 0.05) {
+                        starArray[i * 3 + 1] = -100; // 바닥에 닿으면 숨김
+                    }
+                }
+            }
+            if (anyStarActive) {
+                starGeo.attributes.position.needsUpdate = true;
+            }
+
+            // 6. 슬래시 궤적 & 충격파 링 & 복셀 파편 블록 업데이트
+            if (slashLife > 0) {
+                slashLife -= dt;
+                slashMesh.scale.addScalar(dt * 2.8);
+                slashMesh.rotation.z += dt * 5.0;
+                slashMat.opacity = Math.max(0, slashLife / 0.22);
+                slashMesh.visible = true;
+            } else {
+                slashMat.opacity = 0;
+                slashMesh.visible = false;
+            }
+
+            if (shockwaveLife > 0) {
+                shockwaveLife -= dt;
+                shockwaveMesh.scale.addScalar(dt * 3.2);
+                shockwaveMat.opacity = Math.max(0, shockwaveLife / 0.16);
+                shockwaveMesh.visible = true;
+            } else {
+                shockwaveMat.opacity = 0;
+                shockwaveMesh.visible = false;
+            }
+
+            let anyDebrisActive = false;
+            for (let i = 0; i < debrisCount; i++) {
+                const d = debrisData[i];
+                if (!d.active) continue;
+                anyDebrisActive = true;
+                d.vel.y -= 15.0 * dt; // 중력 가속도
+                d.pos.addScaledVector(d.vel, dt);
+                d.rot.addScaledVector(d.rotSpeed, dt);
+                if (d.pos.y <= 0.06) {
+                    d.pos.y = 0.06;
+                    d.vel.y *= -0.35; // 지면 바운스
+                    d.vel.x *= 0.75;
+                    d.vel.z *= 0.75;
+                    if (Math.abs(d.vel.y) < 0.2) {
+                        d.vel.set(0, 0, 0);
+                    }
+                }
+                _tempEuler.set(d.rot.x, d.rot.y, d.rot.z);
+                debrisDummy.makeRotationFromEuler(_tempEuler);
+                debrisDummy.setPosition(d.pos);
+                debrisMesh.setMatrixAt(i, debrisDummy);
+            }
+            if (anyDebrisActive) {
+                debrisMesh.instanceMatrix.needsUpdate = true;
+            }
+
+            // 실시간 성능 모니터링 (FPS & MS)
+            frameCount++;
+            const nowTime = performance.now();
+            if (nowTime - lastFpsUpdate >= 350) {
+                const currentFps = Math.round((frameCount * 1000) / (nowTime - lastFpsUpdate));
+                const frameMs = (1000 / Math.max(1, currentFps)).toFixed(1);
+                if (fpsValEl) fpsValEl.innerText = currentFps;
+                if (msValEl) msValEl.innerText = frameMs + 'ms';
+                frameCount = 0;
+                lastFpsUpdate = nowTime;
+            }
+
+            renderFrame();
+        }
+
+        // ==========================================
+        // 10. 마인크래프트 카메라 앵글 & 렌더링 (재사용 벡터로 GC 0%)
+        // ==========================================
+        function renderFrame() {
+            // 카메라 셰이크 감쇠
+            let shakeX = 0;
+            let shakeY = 0;
+            if (shakeAmount > 0) {
+                shakeX = (Math.random() - 0.5) * shakeAmount;
+                shakeY = (Math.random() - 0.5) * shakeAmount;
+                shakeAmount = Math.max(0, shakeAmount - 0.04);
+            }
+
+            // 마우스 회전 즉각 반응 (1:1 다이렉트 컨트롤 - 마우스 딜레이/밀림 0ms)
+            camYaw = targetCamYaw;
+            camPitch = targetCamPitch;
+            camDist = THREE.MathUtils.lerp(camDist, targetCamDist, 0.40);
+
+            // ★ 쉬프트락 고정: 캐릭터 몸통/시선이 항상 카메라 조준 방향과 1:1 완벽 일치
+            player.rotation.y = camYaw + Math.PI;
+
+            _vTargetPos.copy(player.position);
+            _vTargetPos.y += 1.65;
+
+            // ★ 쉬프트락(Shift Lock) 오버 더 숄더 카메라 앵글
+            _vRight.set(Math.cos(camYaw), 0, -Math.sin(camYaw)).multiplyScalar(1.35);
+            const camOffsetX = Math.sin(camYaw) * Math.cos(camPitch) * camDist;
+            const camOffsetY = Math.sin(camPitch) * camDist + 1.1;
+            const camOffsetZ = Math.cos(camYaw) * Math.cos(camPitch) * camDist;
+
+            _vDesiredPos.set(
+                _vTargetPos.x + camOffsetX + _vRight.x + shakeX,
+                _vTargetPos.y + camOffsetY + shakeY,
+                _vTargetPos.z + camOffsetZ + _vRight.z
+            );
+            camera.position.lerp(_vDesiredPos, 0.90);
+
+            // 카메라가 바라보는 타겟: 플레이어 우측 전방 조준선 (중앙 크로스헤어와 100% 일치)
+            _vLookAtTarget.copy(_vTargetPos).addScaledVector(_vRight, 0.52);
+            _vLookAtTarget.y += 0.15;
+            camera.lookAt(_vLookAtTarget.x + shakeX * 0.5, _vLookAtTarget.y, _vLookAtTarget.z);
+
+            // 그래픽 최적화: 블룸 비활성화 시 씬을 직접 다이렉트 렌더링하여 60~120+ FPS 초고속 보장!
+            if (qualityModes[currentQualityMode] && qualityModes[currentQualityMode].useBloom) {
+                composer.render();
+            } else {
+                renderer.render(scene, camera);
+            }
+        }
+
+        // 실시간 FPS 엘리먼트 & 버튼 리스너 바인딩
+        let frameCount = 0;
+        let lastFpsUpdate = performance.now();
+        const fpsValEl = document.getElementById('fps-val');
+        const msValEl = document.getElementById('ms-val');
+        const perfBtnEl = document.getElementById('perf-toggle-btn');
+
+        if (perfBtnEl) {
+            perfBtnEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setQualityMode(currentQualityMode + 1);
+            });
+        }
+
+        const fsBtnEl = document.getElementById('fs-toggle-btn');
+        if (fsBtnEl) {
+            fsBtnEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+            });
+        }
+
+        // 창 크기 조절 (해상도 및 블룸 버퍼 비율 유지)
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+            const mode = qualityModes[currentQualityMode];
+            if (mode && mode.useBloom) {
+                bloomPass.setSize(
+                    Math.floor(window.innerWidth * mode.bloomResRatio),
+                    Math.floor(window.innerHeight * mode.bloomResRatio)
+                );
+            }
+        });
+
+        // 애니메이션 시작
+        animate();
+    </script>
+</body>
+</html>
